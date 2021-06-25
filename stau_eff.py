@@ -6,7 +6,7 @@ import math
 import glob
 import json
 import matplotlib.pyplot as plt
-#import pandas as pd
+import pandas as pd
 from datetime import datetime
 
 
@@ -25,15 +25,15 @@ pt_cuts = []
 d0_cuts = []
 full_cuts = []
 for i in range(len(pt_pass_checks)):
-	full_cuts.append([])
+    full_cuts.append([])
 
 for i in pt_pass_checks:
-	pt_cuts.append("pt" + str(i))
+    pt_cuts.append("pt" + str(i))
 for i in d0_pass_checks:
-	d0_cuts.append("d" + str(i))
+    d0_cuts.append("d" + str(i))
 for i in range(len(pt_pass_checks)):
-	for j in range(len(d0_pass_checks)):
-		full_cuts[i].append("pt" + str(pt_pass_checks[i]) + "_d" + str(d0_pass_checks[j]))
+    for j in range(len(d0_pass_checks)):
+        full_cuts[i].append("pt" + str(pt_pass_checks[i]) + "_d" + str(d0_pass_checks[j]))
 
 
 lifetime_list = []
@@ -47,17 +47,17 @@ n = 0
 #mass_order_tracking = []
 
 charged_list = [1, 2, 3, 4, 5, 6, 7, 8, 11, 13, 15, 17, 24, 34, 37, 38, 62, 1000011, 1000013,
-	1000015, 2000011, 2000013, 2000015, 2000024, 2000037, 211, 9000211, 100211,
-	10211, 9010211, 213, 10213, 20213, 9000213, 100213, 9010213, 9020213, 30213,
-	9030213, 9040213, 215, 10215, 9000215, 9010215, 217, 9000217, 9010217, 219,
-	321, 9000321, 10321, 100321, 9010321, 9020321, 323, 10323, 20323, 100323,
-	9000323, 30323, 325, 9000325, 10325, 20325, 9010325, 9020325, 327, 9010327, 329,
-	9000329, 411, 10411, 413, 10413, 20413, 415, 431, 10431, 433, 10433, 20433, 435,
-	521, 10521, 523, 10523, 20523, 525, 541, 10541, 543, 10543, 20543, 545, 2224,
-	2214, 1114, 3222, 3112, 3224, 3114, 3312, 3314, 3334, 4122, 4222, 4212, 4224,
-	4214, 4232, 4322, 4324, 4412, 4422, 4414, 4424, 4432, 4434, 4444, 5112, 5222,
-	5114, 5224, 5132, 5312, 5314, 5332, 5334, 5242, 5422, 5424, 5442, 5444, 5512,
-	5514, 5532, 5534, 5554, 9221132, 9331122]
+    1000015, 2000011, 2000013, 2000015, 2000024, 2000037, 211, 9000211, 100211,
+    10211, 9010211, 213, 10213, 20213, 9000213, 100213, 9010213, 9020213, 30213,
+    9030213, 9040213, 215, 10215, 9000215, 9010215, 217, 9000217, 9010217, 219,
+    321, 9000321, 10321, 100321, 9010321, 9020321, 323, 10323, 20323, 100323,
+    9000323, 30323, 325, 9000325, 10325, 20325, 9010325, 9020325, 327, 9010327, 329,
+    9000329, 411, 10411, 413, 10413, 20413, 415, 431, 10431, 433, 10433, 20433, 435,
+    521, 10521, 523, 10523, 20523, 525, 541, 10541, 543, 10543, 20543, 545, 2224,
+    2214, 1114, 3222, 3112, 3224, 3114, 3312, 3314, 3334, 4122, 4222, 4212, 4224,
+    4214, 4232, 4322, 4324, 4412, 4422, 4414, 4424, 4432, 4434, 4444, 5112, 5222,
+    5114, 5224, 5132, 5312, 5314, 5332, 5334, 5242, 5422, 5424, 5442, 5444, 5512,
+    5514, 5532, 5534, 5554, 9221132, 9331122]
 
 
 #**************************************************************************************************************************
@@ -68,72 +68,72 @@ charged_list = [1, 2, 3, 4, 5, 6, 7, 8, 11, 13, 15, 17, 24, 34, 37, 38, 62, 1000
 # Based on this stackoverflow example:
 #https://stackoverflow.com/questions/59132538/counting-the-length-of-each-branch-in-a-binary-tree-and-print-out-the-nodes-trav
 def decaysToSelf(particle) :
-	notSelfDecay = True
-	for child in particle.end_vertex.particles_out:
-		if ( abs(child.pid) == abs(particle.pid) and child.id!=particle.id and child.id < 100000) :
-			notSelfDecay = False
-			break
-	return not notSelfDecay
+    notSelfDecay = True
+    for child in particle.end_vertex.particles_out:
+        if ( abs(child.pid) == abs(particle.pid) and child.id!=particle.id and child.id < 100000) :
+            notSelfDecay = False
+            break
+    return not notSelfDecay
 
 
 def findBSMParticles(truthparticles, PDGID=None, decays=False) :
-	#print("Start")
-	BSM_particles = []
+    #print("Start")
+    BSM_particles = []
 
-	for iparticle,particle in enumerate(truthparticles):
-		# Handed it a PDG ID?
-		if PDGID :
+    for iparticle,particle in enumerate(truthparticles):
+        # Handed it a PDG ID?
+        if PDGID :
             #if (abs(particle.pid)==PDGID and particle.status==62) :
-			if abs(particle.pid) not in PDGID:
-				continue
+            if abs(particle.pid) not in PDGID:
+                continue
 
-		# Otherwise, interested in SUSY particles only
-		elif abs(particle.pid) < 999999:
-			continue
-		#print("Here")
-		#print("Particle status: ", particle.status)
-		if (particle.status==62) :
-			BSM_particles.append(particle)
-        # Find stable particles or particle not decaying into itself
-        #if particle.end_vertex :
-        # if not decaysToSelf(particle) :
-        #  BSM_particles.append(particle)
-        # if not particle.end_vertex :
-        #  BSM_particles.append(particle)
+        # Otherwise, interested in SUSY particles only
+        elif abs(particle.pid) < 999999:
+            continue
+        #print("Here")
+        #print("Particle status: ", particle.status)
+        #if (particle.status==62) :
+         #   BSM_particles.append(particle)
+        #Find stable particles or particle not decaying into itself
+        if particle.end_vertex :
+            if not decaysToSelf(particle) :
+                BSM_particles.append(particle)
+        if not particle.end_vertex :
+            BSM_particles.append(particle)
 
 
-	if len(BSM_particles) != 2:
-		print(len(BSM_particles))
-		print("Oops - there aren't 2 BSM particles!!! Evacute Earth")
+    if len(BSM_particles) != 2:
+        print(len(BSM_particles))
+        print("Oops - there aren't 2 BSM particles!!! Evacute Earth")
 
-	return BSM_particles
+    return BSM_particles
 
 
 def dfs_paths(stack, particle, stable_particles = []):
 
     if particle == None:
-	    return
+        return
 
-	# append this particle ID to the path array
+    # append this particle ID to the path array
     stack.append(particle.id)
 
-	# If this particle is the end of the chain, save it
-	if(not particle.end_vertex):
+    # If this particle is the end of the chain, save it
+    if(not particle.end_vertex):
 
         # Check status
-		if particle.status != 1 :
+        if particle.status != 1 :
             print("Uh oh! Stable particle has status",particle.status())
             exit(1)
 
         # Append
         stable_particles.append(particle)
 
-	# Otherwise try each particle from decay
-	else :
+    # Otherwise try each particle from decay
+    else :
         for child in particle.end_vertex.particles_out :
             dfs_paths(stack, child, stable_particles)
 
-	# Magic
+    # Magic
     stack.pop()
 
 
@@ -141,13 +141,13 @@ def dfs_paths(stack, particle, stable_particles = []):
 # step, or you're running this on a post-simulation xAOD
 def findBSMDecayProducts(particle,charge_eta=True) :
 
-	stable_descendents = []
+    stable_descendents = []
     dfs_paths([],particle,stable_descendents)
-	# If we want charged and eta ok only, subdivide
-	if charge_eta :
+    # If we want charged and eta ok only, subdivide
+    if charge_eta :
         children = [i for i in stable_descendents if ((abs(i.pid) in charged_list) and (abs(i.momentum.eta()) <= 2.5))]
         return children
-	else :
+    else :
         return stable_descendents
 
 #**************************************************************************************************************************
@@ -157,9 +157,9 @@ def findBSMDecayProducts(particle,charge_eta=True) :
 def findGoodTrackCount(pt, ptcut, d0, d0cut):
     temp =[0, 0, 0]
     if pt > ptcut:
-		temp[0] = 1
+        temp[0] = 1
     if d0 < d0cut and d0 > d0_min_check:
-		temp[1] = 1
+        temp[1] = 1
     if (pt > ptcut and d0 < d0cut and d0 > d0_min_check):
         temp[2] = 1
     return temp
@@ -175,23 +175,23 @@ for m in range(len(file_list)):
     n += 1
     seen_event_count = 0
     event_count = 0
-    doTest = True
+    doTest = False
 
-	#histogram pass counters
-	pt_ok_list = numpy.zeros(len(pt_pass_checks))
+    #histogram pass counters
+    pt_ok_list = numpy.zeros(len(pt_pass_checks))
     d0_ok_list = numpy.zeros(len(d0_pass_checks))
 
-	#File tracking lists
-	eta_list = []
-	d0_list = []
-	pt_list = []
-	energy_list = []
-	dec_dist_list = []
-	trans_dec_dist_list = []
+    #File tracking lists
+    eta_list = []
+    d0_list = []
+    pt_list = []
+    energy_list = []
+    dec_dist_list = []
+    trans_dec_dist_list = []
 
     event_passes = numpy.zeros([len(pt_pass_checks), len(d0_pass_checks)])
 
-	with hep.open(infile) as f:
+    with hep.open(infile) as f:
         dirname = infile.split("/")[-2]
         tokens = dirname.split("_")
         #CHANGE THIS BACK WHEN SWITCHING FROM ONLY TAUS!!!!!!!
@@ -200,11 +200,11 @@ for m in range(len(file_list)):
         lifetime = tokens[3]
         if lifetime not in lifetime_list:
             lifetime_list.append(lifetime)
-	# if mChild not in mass_order_tracking:
-	#   mass_order_tracking.append(mChild)
+    # if mChild not in mass_order_tracking:
+    #   mass_order_tracking.append(mChild)
 
 
-	#Event Level Start ==============================================================================================
+    #Event Level Start ==============================================================================================
 
         while True :
             evt = f.read()
@@ -237,12 +237,12 @@ for m in range(len(file_list)):
 
 
             #finds all the BSM pdgid 35 particles that decay into something else
-			BSM_particles = findBSMParticles(evt.particles, PDGID = [1000015, 2000015])
+            BSM_particles = findBSMParticles(evt.particles, PDGID = [1000015, 2000015])
 
 
 
 
-	#Particle Level Start =========================================================================================
+    #Particle Level Start =========================================================================================
 
             for bsm_part in BSM_particles:
                 event_prods = findBSMDecayProducts(bsm_part,charge_eta=True)
@@ -265,7 +265,7 @@ for m in range(len(file_list)):
                         decfourvec = decvtx.position
                         decpoint = numpy.array([decfourvec.x, decfourvec.y, decfourvec.z])
                         prod_dec_dist = numpy.array([decpoint[0] - point[0], decpoint[1] - point[1], decpoint[2] - point[2]])
-                    trans_prod_dec_dist = numpy.squt(numpy.square(prod_dec_dist[0]) + nupy.square(prod_dec_dist[1]))
+                        trans_prod_dec_dist = numpy.squt(numpy.square(prod_dec_dist[0]) + nupy.square(prod_dec_dist[1]))
                         if trans_prod_dec_dist < 200:
                             dec_vtx_check = False
 
@@ -310,7 +310,7 @@ for m in range(len(file_list)):
                                     track_ids[i][j].append(part.id)
 
 
-	#Particle Level End ===========================================================================================
+    #Particle Level End ===========================================================================================
 
             if tracks > 0:
                 seen_event_count += 1
@@ -326,18 +326,18 @@ for m in range(len(file_list)):
                         event_passes[i][j] += 1
 
 
-					#Event Level End ================================================================================================
+                    #Event Level End ================================================================================================
 
     events += event_count
     seen_event_count_total += seen_event_count
 
-	efficiencies = numpy.empty([len(event_passes), len(event_passes[0])])
+    efficiencies = numpy.empty([len(event_passes), len(event_passes[0])])
     errors = numpy.empty([len(event_passes), len(event_passes[0])])
-	for i in range(len(event_passes)):
-		for j in range(len(event_passes[i])):
-			efficiencies[i][j] = (event_passes[i][j] / seen_event_count)
-			errors[i][j] = (math.sqrt((event_passes[i][j] / seen_event_count) *
-						(1 - (event_passes[i][j] / seen_event_count)) / seen_event_count))
+    for i in range(len(event_passes)):
+        for j in range(len(event_passes[i])):
+            efficiencies[i][j] = (event_passes[i][j] / seen_event_count)
+            errors[i][j] = (math.sqrt((event_passes[i][j] / seen_event_count) *
+                        (1 - (event_passes[i][j] / seen_event_count)) / seen_event_count))
 
     for i in range(len(efficiencies)):
         for j in range(len(efficiencies[i])):
@@ -351,21 +351,21 @@ for m in range(len(file_list)):
         cf_dict[d0_cuts[i]] = d0_ok_list[i]
     for i in range(len(full_cuts)):
         for j in range(len(full_cuts[i])):
-        cf_dict[full_cuts[i][j]] = event_passes[i][j]
-	cutflow_list.append(cf_dict)
+            cf_dict[full_cuts[i][j]] = event_passes[i][j]
+    cutflow_list.append(cf_dict)
 
-	histogram_list.append({"cmass": mChild, "lifetime": lifetime, "etas": eta_list, "d0s": d0_list, "pt_list": pt_list,
-			"energy": energy_list, "decay distance": dec_dist_list,
-			"trans decay distance": trans_dec_dist_list})
+    histogram_list.append({"cmass": mChild, "lifetime": lifetime, "etas": eta_list, "d0s": d0_list, "pt_list": pt_list,
+            "energy": energy_list, "decay distance": dec_dist_list,
+            "trans decay distance": trans_dec_dist_list})
 
-	print("Done with file ", n, " of 36.")
+    print("Done with file ", n, " of 36.")
 
 #File Level End =====================================================================================================
 
 data = {"data": data_list, "cutflow": cutflow_list, "hist": histogram_list, "lifetimes": lifetime_list,
-		"pts": pt_pass_checks, "d0s": d0_pass_checks, "str_pts": pt_cuts, "str_d0s": d0_cuts, "str_both": full_cuts}
+        "pts": pt_pass_checks, "d0s": d0_pass_checks, "str_pts": pt_cuts, "str_d0s": d0_cuts, "str_both": full_cuts}
 with open('stau_efficiencies.json', 'w') as fp:
-json.dump(data, fp)
+    json.dump(data, fp)
 
 print("Percent of \"seen\" events: ", 100 * seen_event_count_total / events, "%")
 
