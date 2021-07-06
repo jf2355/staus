@@ -8,14 +8,15 @@ import json
 import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime
-
+from random import seed
+from random import random
 
 
 # file_list = glob.glob("/eos/user/k/kpachal/TrackTrigStudies/RunDirectories/run_higgsportal_testTaus/higgsportal_testTaus_125_*/events.hepmc")
 file_list = glob.glob("/eos/user/k/kdipetri/Snowmass_HepMC/run_staus/*/events.hepmc")
 
 #Hardcoded stuff, cheange this section ===============================================================
-pt_pass_checks = [0.5, 1, 2, 5]
+pt_pass_checks = [0.1, 0.7, 1.3, 2] #was .5,1,2,5
 d0_pass_checks = [10, 20, 50, 100]
 d0_min_check = 2
 track_low_cut = 5
@@ -156,7 +157,13 @@ def findBSMDecayProducts(particle,charge_eta=True) :
 
 def findGoodTrackCount(pt, ptcut, d0, d0cut):
     temp =[0, 0, 0]
-    if pt > ptcut:
+    seed(1)
+    for _ in range(100):
+        rng_check = random()
+        #print(rng_check)
+    #if pt > ptcut:
+        #temp[0] = 1
+    if pt > ptcut and rng_check > 0.1:
         temp[0] = 1
     if d0 < d0cut and d0 > d0_min_check:
         temp[1] = 1

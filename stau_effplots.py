@@ -128,7 +128,7 @@ for i in data["cutflow"]:
     temp_cf_values_both = []
     for j in cf_cats_pt:
         temp_cf_values_pt.append(i[j])
-    for j in cf_cats_d0:    
+    for j in cf_cats_d0:
         temp_cf_values_d0.append(i[j])
     for j in cf_cats_both:
         temp_cf_values_both.append(i[j])
@@ -151,6 +151,7 @@ f.close()
 #-----------------
 
 # Fixed transvese momentum efficiency plots
+print("pt eff plots")
 for i in range(len(lt_list)):
     for j in range(len(pt_list)):
         fig,axs = plt.subplots()
@@ -160,9 +161,10 @@ for i in range(len(lt_list)):
         for k in range(len(d0_list)):
             axs.errorbar(cmasses[i][j][k], efficiencies[i][j][k], yerr = errors[i][j][k], label = "d0 < " + str(d0_list[k]) + " mm", marker = "o", alpha = 0.5)
         axs.legend(fontsize = "small", frameon = False)
-        fig.savefig('Stau_eff_' + str(lt_list[i]) + '_pt' + str(pt_list[j]) + '.pdf' )
+        fig.savefig('plots/stau_eff_' + str(lt_list[i]) + '_pt' + str(pt_list[j]) + '.pdf' )
 
 # Fixed d0 efficiency plots
+print("d0 eff plots")
 for i in range(len(lt_list)):
     for j in range(len(d0_list)):
         fig, axs = plt.subplots()
@@ -172,48 +174,52 @@ for i in range(len(lt_list)):
         for k in range(len(pt_list)):
             axs.errorbar(cmasses[i][k][j], efficiencies[i][k][j], yerr = errors[i][k][j], label = "pt > " + str(pt_list[k]) + " GeV", marker = "o", alpha = 0.5)
         axs.legend(fontsize = "small", frameon = False)
-        fig.savefig('Stau_eff_' + str(lt_list[i]) + '_d0' + str(d0_list[j]) + '.pdf' )
+        fig.savefig('plots/stau_eff_' + str(lt_list[i]) + '_d0' + str(d0_list[j]) + '.pdf' )
 
 
 
 # AVERAGES PLOTS
 #---------------------
 
-# Average energy plots
+print("avg energy plots")
+#Average energy plots
 for i in range(len(lt_list)):
     fig,axs = plt.subplots()
     axs.set_title("Lifetime: " + str(lt_list[i]))
     axs.set_xlabel("Mass (GeV)")
     axs.set_ylabel("Average Energy (GeV)")
     axs.errorbar(avg_mass[i], avg_energy[i])
-    fig.savefig('Stau_avg_energy_' + str(lt_list[i]) + '.pdf' )
+    fig.savefig('plots/stau_avg_energy_' + str(lt_list[i]) + '.pdf' )
 
 # Average displacementplots
+print("avg dist plots")
 for i in range(len(lt_list)):
     fig,axs = plt.subplots()
     axs.set_title("Lifetime: " + str(lt_list[i]))
     axs.set_xlabel("Mass (GeV)")
     axs.set_ylabel("Average Displacement (mm)")
     axs.errorbar(avg_mass[i], avg_dist[i])
-    fig.savefig('Stau_avg_dist_' + str(lt_list[i]) + '.pdf' )
+    fig.savefig('plots/stau_avg_dist_' + str(lt_list[i]) + '.pdf' )
 
 # Average pt plots
+print("avg pt plots")
 for i in range(len(lt_list)):
     fig,axs = plt.subplots()
     axs.set_title("Lifetime: " + str(lt_list[i]))
     axs.set_xlabel("Mass (GeV)")
     axs.set_ylabel("Average Transverse Momentum (GeV)")
     axs.errorbar(avg_mass[i], avg_pt[i])
-    fig.savefig('Stau_avg_pt_' + str(lt_list[i]) + '.pdf' )
+    fig.savefig('plots/stau_avg_pt_' + str(lt_list[i]) + '.pdf' )
 
 # Average d0 plots
+print("avg d0 plots")
 for i in range(len(lt_list)):
     fig,axs = plt.subplots()
     axs.set_title("Lifetime: " + str(lt_list[i]))
     axs.set_xlabel("Mass (GeV)")
-    axs.set_ylabel("Average d0 (GeV)")
+    axs.set_ylabel("Average d0 (mm)")
     axs.errorbar(avg_mass[i], avg_d0[i])
-    fig.savefig('Stau_avg_d0_' + str(lt_list[i]) + '.pdf' )
+    fig.savefig('plots/stau_avg_d0_' + str(lt_list[i]) + '.pdf' )
 
 
 
@@ -221,6 +227,7 @@ for i in range(len(lt_list)):
 #--------------------
 
 # Energy Histogram
+print("energy hist")
 for i in range(len(lt_list)):
     for j in range(len(mass_list)):
         spec_energies = []
@@ -234,10 +241,12 @@ for i in range(len(lt_list)):
         axs.set_xlabel("Energy (GeV)")
         axs.set_ylabel("Particles")
         axs.set_yscale("log")
+        axs.errorbar(cmasses[i][k][j], efficiencies[i][k][j], yerr = errors[i][k][j], label = "pt > " + str(pt_list[k]) + " GeV", marker = "o", alpha = 0.5)
         axs.hist(spec_energies, bins = 35)
         fig.savefig(title )
 
 # Decay Distance Histogram
+print("decay dist hist")
 for i in range(len(lt_list)):
     for j in range(len(mass_list)):
         spec_dists = []
@@ -250,10 +259,12 @@ for i in range(len(lt_list)):
         axs.set_xlabel("Decay Distance (mm)")
         axs.set_ylabel("Particles")
         axs.set_yscale("log")
+        axs.errorbar(cmasses[i][k][j], efficiencies[i][k][j], yerr = errors[i][k][j], label = "pt > " + str(pt_list[k]) + " GeV", marker = "o", alpha = 0.5)
         axs.hist(spec_dists, bins = 35)
         fig.savefig(title )
 
 # Transverse Decay Distance Histogram
+print("trans decay dist hist")
 for i in range(len(lt_list)):
     for j in range(len(mass_list)):
         spec_trans_dists = []
@@ -266,10 +277,12 @@ for i in range(len(lt_list)):
         axs.set_xlabel("Transverse Decay Distance (mm)")
         axs.set_ylabel("Particles")
         axs.set_yscale("log")
+        axs.errorbar(cmasses[i][k][j], efficiencies[i][k][j], yerr = errors[i][k][j], label = "pt > " + str(pt_list[k]) + " GeV", marker = "o", alpha = 0.5)
         axs.hist(spec_trans_dists, bins = 35)
         fig.savefig(title )
 
 # p_T Histogram
+print("pt hist")
 for i in range(len(lt_list)):
     for j in range(len(mass_list)):
         spec_pt = []
@@ -282,10 +295,12 @@ for i in range(len(lt_list)):
         axs.set_xlabel("Transverse Momentum (GeV)")
         axs.set_ylabel("Particles")
         axs.set_yscale("log")
+        axs.errorbar(cmasses[i][k][j], efficiencies[i][k][j], yerr = errors[i][k][j], label = "pt > " + str(pt_list[k]) + " GeV", marker = "o", alpha = 0.5)
         axs.hist(spec_pt, bins = 35)
         fig.savefig(title )
 
 # d0 Histogram
+print("d0 hist")
 for i in range(len(lt_list)):
     for j in range(len(mass_list)):
         spec_d0 = []
@@ -298,10 +313,12 @@ for i in range(len(lt_list)):
         axs.set_xlabel("d0 (mm)")
         axs.set_ylabel("Particles")
         axs.set_yscale("log")
+        axs.errorbar(cmasses[i][k][j], efficiencies[i][k][j], yerr = errors[i][k][j], label = "pt > " + str(pt_list[k]) + " GeV", marker = "o", alpha = 0.5)
         axs.hist(spec_d0, bins = 35)
         fig.savefig(title )
 
 # Eta Histogram
+print("eta hist")
 for i in range(len(lt_list)):
     for j in range(len(mass_list)):
         spec_eta = []
@@ -313,6 +330,7 @@ for i in range(len(lt_list)):
         axs.set_title("Eta (lifetime: " + str(lt_list[i]) + ", mass: " + str(mass_list[j]))
         axs.set_xlabel("Eta")
         axs.set_ylabel("Particles")
+        axs.errorbar(cmasses[i][k][j], efficiencies[i][k][j], yerr = errors[i][k][j], label = "pt > " + str(pt_list[k]) + " GeV", marker = "o", alpha = 0.5)
         axs.hist(spec_eta, bins = 35)
         fig.savefig(title )
 
@@ -322,6 +340,7 @@ for i in range(len(lt_list)):
 # --------------------
 
 # pT Cutflow Histograms
+print("pt cutflow hist")
 for i in range(len(cf_masses)):
     title = "Stau_cf_pT_" + str(cf_masses[i]) + "_" + str(cf_lifetimes[i]) + ".pdf"
     fig,axs = plt.subplots()
@@ -332,6 +351,7 @@ for i in range(len(cf_masses)):
     fig.savefig(title )
 
 # d0 Cutflow Histograms
+print("d0 cutflow hist")
 for i in range(len(cf_masses)):
     title = "Stau_cf_d0_" + str(cf_masses[i]) + "_" + str(cf_lifetimes[i]) + ".pdf"
     fig,axs = plt.subplots()
@@ -342,6 +362,7 @@ for i in range(len(cf_masses)):
     fig.savefig(title )
 
 # Full Cutflow Histograms
+print("full cutflow hist")
 for i in range(len(cf_masses)):
     title = "Stau_cf_fullcuts_" + str(cf_masses[i]) + "_" + str(cf_lifetimes[i]) + ".pdf"
     fig,axs = plt.subplots()
