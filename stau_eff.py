@@ -16,10 +16,13 @@ from random import random
 file_list = glob.glob("/eos/user/k/kdipetri/Snowmass_HepMC/run_staus/*/events.hepmc")
 
 #Hardcoded stuff, cheange this section ===============================================================
-pt_pass_checks = [0.1, 0.7, 1.3, 2] #was .5,1,2,5
+pt_pass_checks = [0.5, 1.0, 2.0, 5.0]
 d0_pass_checks = [10, 20, 50, 100]
 d0_min_check = 2
-track_low_cut = 5
+track_low_cut = 2
+max_track_eff = 1
+seed(1)
+use_slope_eff = True
 #=====================================================================================================
 
 pt_cuts = []
@@ -155,21 +158,36 @@ def findBSMDecayProducts(particle,charge_eta=True) :
 #**************************************************************************************************************************
 #**************************************************************************************************************************
 
-def findGoodTrackCount(pt, ptcut, d0, d0cut):
-    temp =[0, 0, 0]
-    seed(1)
-    for _ in range(100):
-        rng_check = random()
-        #print(rng_check)
-    #if pt > ptcut:
-        #temp[0] = 1
-    if pt > ptcut and rng_check > 0.1:
+def findGoodTrackCount(pt, ptcut, d0, d0cut, use_slope_eff=True):
+    temp = [0, 0, 0]
+    #rng_check = random()
+    #print(rng_check)
+    if pt > ptcut:
         temp[0] = 1
-    if d0 < d0cut and d0 > d0_min_check:
-        temp[1] = 1
+    #if pt > ptcut and rng_check < max_track_eff:
+        #temp[0] = 1
+    #if d0 < d0cut and d0 > d0_min_check:
+    if d0 > d0_min_check and passes_d0_cut(d0, d0cut, use_slope_eff):
+       temp[1] = 1
     if (pt > ptcut and d0 < d0cut and d0 > d0_min_check):
         temp[2] = 1
     return temp
+
+def passes_d0_cut(d0, d0cut, use_slope_eff):
+    # Checks maximum value cut
+    rng_check = random()
+    if not use_slope_eff:
+        if d0 < d0cut and rng_check < max_track_eff: return True
+        else: return False
+    #Calculates efficiency using line
+    #TODO define slope and yinter
+    y_inter = max_track_eff
+    effslope = -max_track_eff/d0cut
+    eff = effslope*d0 + y_inter
+    if rng_check < eff: return True
+    else: return False
+
+
 
 
 
@@ -306,7 +324,7 @@ for m in range(len(file_list)):
                         #checks if track passes the pt / d0
                         for i in range(len(pt_pass_checks)):
                             for j in range(len(d0_pass_checks)):
-                                tracker = findGoodTrackCount(pt, pt_pass_checks[i], d_mag, d0_pass_checks[j])
+                                tracker = findGoodTrackCount(pt, pt_pass_checks[i], d_mag, d0_pass_checks[j], use_slope_eff)
                                 if tracker[0] == 1:
                                     event_pt_ok_list[i] += 1
                                 if tracker[1] == 1:
@@ -315,6 +333,7 @@ for m in range(len(file_list)):
                                     event_num_good_tracks[i][j] += 1
                                     #keep track ids so we can do other things later
                                     track_ids[i][j].append(part.id)
+
 
 
     #Particle Level End ===========================================================================================
@@ -371,8 +390,12 @@ for m in range(len(file_list)):
 
 data = {"data": data_list, "cutflow": cutflow_list, "hist": histogram_list, "lifetimes": lifetime_list,
         "pts": pt_pass_checks, "d0s": d0_pass_checks, "str_pts": pt_cuts, "str_d0s": d0_cuts, "str_both": full_cuts}
-with open('stau_efficiencies.json', 'w') as fp:
+save_name = 'stau_%dtrack_%.1fefficiencies.json'%(track_low_cut,max_track_eff)
+if use_slope_eff:
+    save_name = 'stau_%dtrack_%.1fefficiencies_slope.json'%(track_low_cut,max_track_eff)
+with open(save_name, 'w') as fp:
     json.dump(data, fp)
+
 
 print("Percent of \"seen\" events: ", 100 * seen_event_count_total / events, "%")
 
