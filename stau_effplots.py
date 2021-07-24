@@ -21,6 +21,10 @@ do_eff = True
 track_eff = 1
 track_low_cut = 2
 doTest = False
+use_slope_eff = False
+append = ""
+if use_slope_eff:
+    append = "_slope"
 
 lt_list = []
 pt_list = []
@@ -38,7 +42,7 @@ cf_cats_both = ["events", "seen"]
 
 print("testing")
 
-f = open('stau_%dtrack_%.1fefficiencies_slope.json'%(track_low_cut,track_eff))
+f = open('stau_%dtrack_%.1fefficiencies%s.json'%(track_low_cut,track_eff,append))
 data = json.load(f)
 
 for i in data["lifetimes"]:
@@ -168,7 +172,7 @@ if do_eff:
             for k in range(len(d0_list)):
                 axs.errorbar(cmasses[i][j][k], efficiencies[i][j][k], yerr = errors[i][j][k], label = "d0 < " + str(d0_list[k]) + " mm", marker = "o", alpha = 0.5)
             axs.legend(fontsize = "small", frameon = False)
-            fig.savefig('plots/%dtrack_%.1feff_stau_eff_'%(track_low_cut,track_eff) + str(lt_list[i]) + '_pt' + str(pt_list[j]) + '.pdf' )
+            fig.savefig('plots/%dtrack_%.1feff_stau_eff_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_pt' + str(pt_list[j]) + '.pdf' )
             if doTest: break
         if doTest: break
 
@@ -183,7 +187,7 @@ if do_eff:
             for k in range(len(pt_list)):
                 axs.errorbar(cmasses[i][k][j], efficiencies[i][k][j], yerr = errors[i][k][j], label = "pt > " + str(pt_list[k]) + " GeV", marker = "o", alpha = 0.5)
             axs.legend(fontsize = "small", frameon = False)
-            fig.savefig('plots/%dtrack_%.1feff_stau_eff_'%(track_low_cut,track_eff) + str(lt_list[i]) + '_d0' + str(d0_list[j]) + '.pdf' )
+            fig.savefig('plots/%dtrack_%.1feff_stau_eff_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_d0' + str(d0_list[j]) + '.pdf' )
             if doTest: break
         if doTest: break
 
@@ -200,7 +204,7 @@ if do_avg:
         axs.set_xlabel("Mass (GeV)")
         axs.set_ylabel("Average Energy (GeV)")
         axs.errorbar(avg_mass[i], avg_energy[i])
-        fig.savefig('plots/%dtrack_%.1feff_stau_avg_energy_'%(track_low_cut,track_eff) + str(lt_list[i]) + '.pdf' )
+        fig.savefig('plots/%dtrack_%.1feff_stau_avg_energy_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '.pdf' )
         if doTest: break
 
 # Average displacement plots
@@ -211,7 +215,7 @@ if do_avg:
         axs.set_xlabel("Mass (GeV)")
         axs.set_ylabel("Average Displacement (mm)")
         axs.errorbar(avg_mass[i], avg_dist[i])
-        fig.savefig('plots/%dtrack_%.1feff_stau_avg_dist_'%(track_low_cut,track_eff) + str(lt_list[i]) + '.pdf' )
+        fig.savefig('plots/%dtrack_%.1feff_stau_avg_dist_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '.pdf' )
         if doTest: break
 
 # Average pt plots
@@ -222,7 +226,7 @@ if do_avg:
         axs.set_xlabel("Mass (GeV)")
         axs.set_ylabel("Average Transverse Momentum (GeV)")
         axs.errorbar(avg_mass[i], avg_pt[i])
-        fig.savefig('plots/%dtrack_%.1feff_stau_avg_pt_'%(track_low_cut,track_eff) + str(lt_list[i]) + '.pdf' )
+        fig.savefig('plots/%dtrack_%.1feff_stau_avg_pt_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '.pdf' )
         if doTest: break
 
 # Average d0 plots
@@ -233,7 +237,7 @@ if do_avg:
         axs.set_xlabel("Mass (GeV)")
         axs.set_ylabel("Average d0 (mm)")
         axs.errorbar(avg_mass[i], avg_d0[i])
-        fig.savefig('plots/%dtrack_%.1feff_stau_avg_d0_'%(track_low_cut,track_eff) + str(lt_list[i]) + '.pdf' )
+        fig.savefig('plots/%dtrack_%.1feff_stau_avg_d0_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '.pdf' )
         if doTest: break
 
 
@@ -260,7 +264,7 @@ if do_hist:
             width = bincenters[-1]/len(bincenters)*0.7
             menStd = np.sqrt(y)
             plt.bar(bincenters, y, width=width, yerr=menStd)
-            fig.savefig('plots/%dtrack_%.1feff_stau_energy_'%(track_low_cut,track_eff) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
+            fig.savefig('plots/%dtrack_%.1feff_stau_energy_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
             if doTest: break
         if doTest: break
 
@@ -282,7 +286,7 @@ if do_hist:
             menStd = np.sqrt(y)
             width = 0.05
             plt.bar(bincenters, y, width=width, yerr=menStd)
-            fig.savefig('plots/%dtrack_%.1feff_stau_decay_dist_'%(track_low_cut,track_eff) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
+            fig.savefig('plots/%dtrack_%.1feff_stau_decay_dist_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
             if doTest: break
         if doTest: break
 
@@ -305,7 +309,7 @@ if do_hist:
             menStd = np.sqrt(y)
             width = 0.05
             plt.bar(bincenters, y, width=width, yerr=menStd)
-            fig.savefig('plots/%dtrack_%.1feff_stau_trans_decay_dist_'%(track_low_cut,track_eff) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
+            fig.savefig('plots/%dtrack_%.1feff_stau_trans_decay_dist_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
             if doTest: break
         if doTest: break
 
@@ -327,7 +331,7 @@ if do_hist:
             menStd = np.sqrt(y)
             width = 0.05
             plt.bar(bincenters, y, width=width, yerr=menStd)
-            fig.savefig('plots/%dtrack_%.1feff_stau_pt_'%(track_low_cut,track_eff) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
+            fig.savefig('plots/%dtrack_%.1feff_stau_pt_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
             if doTest: break
         if doTest: break
 
@@ -349,7 +353,7 @@ if do_hist:
             menStd = np.sqrt(y)
             width = 0.05
             plt.bar(bincenters, y, width=width, yerr=menStd)
-            fig.savefig('plots/%dtrack_%.1feff_stau_d0_'%(track_low_cut,track_eff) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
+            fig.savefig('plots/%dtrack_%.1feff_stau_d0_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
             if doTest: break
         if doTest: break
 
@@ -370,7 +374,7 @@ if do_hist:
             menStd = np.sqrt(y)
             width = 0.05
             plt.bar(bincenters, y, width=width, yerr=menStd)
-            fig.savefig('plots/%dtrack_%.1feff_stau_eta_'%(track_low_cut,track_eff) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
+            fig.savefig('plots/%dtrack_%.1feff_stau_eta_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
             if doTest: break
         if doTest: break
 
@@ -388,7 +392,7 @@ if do_cutflow:
         axs.set_ylabel("Events")
         axs.set_yscale("log")
         axs.bar(cf_cats_pt, cf_values_pt[i])
-        fig.savefig('plots/%dtrack_%.1feff_stau_cf_pT_'%(track_low_cut,track_eff) + str(cf_masses[i]) + '_' + str(cf_lifetimes[i]) + '.pdf' )
+        fig.savefig('plots/%dtrack_%.1feff_stau_cf_pT_%s'%(track_low_cut,track_eff,append) + str(cf_masses[i]) + '_' + str(cf_lifetimes[i]) + '.pdf' )
         if doTest: break
 
 # d0 Cutflow Histograms
@@ -399,7 +403,7 @@ if do_cutflow:
         axs.set_ylabel("Events")
         axs.set_yscale("log")
         axs.bar(cf_cats_d0, cf_values_d0[i])
-        fig.savefig('plots/%dtrack_%.1feff_stau_cf_d0_'%(track_low_cut,track_eff) + str(cf_masses[i]) + '_' + str(cf_lifetimes[i]) + '.pdf' )
+        fig.savefig('plots/%dtrack_%.1feff_stau_cf_d0_%s'%(track_low_cut,track_eff,append) + str(cf_masses[i]) + '_' + str(cf_lifetimes[i]) + '.pdf' )
         if doTest: break
 
 # Full Cutflow Histograms
@@ -410,6 +414,6 @@ if do_cutflow:
         axs.set_yscale("log")
         plt.xticks(rotation = 30)
         axs.bar(cf_cats_both, cf_values_both[i])
-        fig.savefig('plots/%dtrack_%.1feff_stau_cf_fullcuts_'%(track_low_cut,track_eff) + str(cf_masses[i]) + '_' + str(cf_lifetimes[i]) + '.pdf' )
+        fig.savefig('plots/%dtrack_%.1feff_stau_cf_fullcuts_%s'%(track_low_cut,track_eff,append) + str(cf_masses[i]) + '_' + str(cf_lifetimes[i]) + '.pdf' )
         if doTest: break
 

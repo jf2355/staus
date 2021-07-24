@@ -22,7 +22,8 @@ d0_min_check = 2
 track_low_cut = 2
 max_track_eff = 1
 seed(1)
-use_slope_eff = True
+doTest = False
+use_slope_eff = False
 #=====================================================================================================
 
 pt_cuts = []
@@ -177,13 +178,22 @@ def passes_d0_cut(d0, d0cut, use_slope_eff):
     # Checks maximum value cut
     rng_check = random()
     if not use_slope_eff:
-        if d0 < d0cut and rng_check < max_track_eff: return True
+        print("doesnt use slope")
+        print("rng", rng_check)
+        print("max_track_eff", max_track_eff)
+        print("passes check", d0 < d0cut and rng_check < max_track_eff)
+        if d0 < d0cut and rng_check < max_track_eff:
+            return True
         else: return False
     #Calculates efficiency using line
-    #TODO define slope and yinter
+    #TODO define slope and yinter)
     y_inter = max_track_eff
     effslope = -max_track_eff/d0cut
     eff = effslope*d0 + y_inter
+    print("uses slope")
+    print("rng", rng_check)
+    print("eff", eff)
+    print("passes check", rng_check < eff)
     if rng_check < eff: return True
     else: return False
 
@@ -200,7 +210,6 @@ for m in range(len(file_list)):
     n += 1
     seen_event_count = 0
     event_count = 0
-    doTest = False
 
     #histogram pass counters
     pt_ok_list = numpy.zeros(len(pt_pass_checks))
@@ -385,6 +394,8 @@ for m in range(len(file_list)):
             "trans decay distance": trans_dec_dist_list})
 
     print("Done with file ", n, " of 36.")
+
+    if doTest: break
 
 #File Level End =====================================================================================================
 
