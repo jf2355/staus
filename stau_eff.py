@@ -19,10 +19,11 @@ file_list = glob.glob("/eos/user/k/kdipetri/Snowmass_HepMC/run_staus/*/events.he
 pt_pass_checks = [0.5, 1.0, 2.0, 5.0]
 d0_pass_checks = [10, 20, 50, 100]
 d0_min_check = 2
+passes_d0 = 0
 track_low_cut = 2
 max_track_eff = 1
 seed(1)
-doTest = False
+doTest = True
 use_slope_eff = False
 #=====================================================================================================
 
@@ -170,7 +171,7 @@ def findGoodTrackCount(pt, ptcut, d0, d0cut, use_slope_eff=True):
     #if d0 < d0cut and d0 > d0_min_check:
     if d0 > d0_min_check and passes_d0_cut(d0, d0cut, use_slope_eff):
        temp[1] = 1
-    if (pt > ptcut and d0 < d0cut and d0 > d0_min_check):
+    if (pt > ptcut and passes_d0 < d0cut and passes_d0 > d0_min_check):
         temp[2] = 1
     return temp
 
@@ -183,6 +184,7 @@ def passes_d0_cut(d0, d0cut, use_slope_eff):
         print("max_track_eff", max_track_eff)
         print("passes check", d0 < d0cut and rng_check < max_track_eff)
         if d0 < d0cut and rng_check < max_track_eff:
+            passes_d0 = d0
             return True
         else: return False
     #Calculates efficiency using line
@@ -194,7 +196,9 @@ def passes_d0_cut(d0, d0cut, use_slope_eff):
     print("rng", rng_check)
     print("eff", eff)
     print("passes check", rng_check < eff)
-    if rng_check < eff: return True
+    if rng_check < eff:
+        passes_d0 = d0
+        return True
     else: return False
 
 
@@ -402,7 +406,11 @@ for m in range(len(file_list)):
 data = {"data": data_list, "cutflow": cutflow_list, "hist": histogram_list, "lifetimes": lifetime_list,
         "pts": pt_pass_checks, "d0s": d0_pass_checks, "str_pts": pt_cuts, "str_d0s": d0_cuts, "str_both": full_cuts}
 save_name = 'stau_%dtrack_%.1fefficiencies.json'%(track_low_cut,max_track_eff)
-if use_slope_eff:
+if use_slope_eff and doTest:
+    save_name = 'test_stau_%dtrack_%.1fefficiencies_slope.json'%(track_low_cut,max_track_eff)
+elif doTest:
+    save_name = 'test_stau_%dtrack_%.1fefficiencies.json'%(track_low_cut,max_track_eff)
+elif use_slope_eff:
     save_name = 'stau_%dtrack_%.1fefficiencies_slope.json'%(track_low_cut,max_track_eff)
 with open(save_name, 'w') as fp:
     json.dump(data, fp)
