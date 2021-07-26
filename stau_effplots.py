@@ -160,7 +160,8 @@ f.close()
 #EFFICIENCY PLOTS
 #-----------------
 if do_eff:
-
+    if use_slope_eff:
+        print("did it")
 # Fixed transvese momentum efficiency plots
     print("pt eff plots")
     for i in range(len(lt_list)):
