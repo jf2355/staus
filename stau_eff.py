@@ -11,21 +11,39 @@ from datetime import datetime
 from random import seed
 from random import random
 
+model = input('higgs or staus: ')
+higgs = 'higgs'
+staus = 'staus'
+print(model)
+if model == higgs:
+    file_list = glob.glob("/eos/user/k/kdipetri/Snowmass_HepMC/run_higgsportal/*/events.hepmc")
+    #file_list = glob.glob("/eos/user/j/jefarr/run_higgsportal/*/events.hepmc")
+    #Hardcoded stuff, change this section ===============================================================
+    pt_pass_checks = [0.5, 1.0, 2.0, 5.0]
+    d0_pass_checks = [10, 20, 50, 100]
+    d0_min_check = 1
+    track_low_cut = 5
+    max_track_eff = 1
+    seed(1)
+    doTest = False
+    use_slope_eff = True
+    #=====================================================================================================
+elif model == staus:
+    file_list = glob.glob("/eos/user/k/kdipetri/Snowmass_HepMC/run_staus/*/events.hepmc")
+    #file_list = glob.glob("/eos/user/j/jefarr/run_staus/*/events.hepmc")
+    #Hardcoded stuff, change this section ===============================================================
+    pt_pass_checks = [0.5, 1.0, 2.0, 5.0]
+    d0_pass_checks = [10, 20, 50, 100]
+    d0_min_check = 1
+    track_low_cut = 2
+    max_track_eff = 1
+    seed(1)
+    doTest = False
+    use_slope_eff = True
+    #=====================================================================================================
+else:
+    print('Please enter either higgs or staus (case sensitive)')
 
-# file_list = glob.glob("/eos/user/k/kpachal/TrackTrigStudies/RunDirectories/run_higgsportal_testTaus/higgsportal_testTaus_125_*/events.hepmc")
-file_list = glob.glob("/eos/user/k/kdipetri/Snowmass_HepMC/run_staus/*/events.hepmc")
-
-#Hardcoded stuff, cheange this section ===============================================================
-pt_pass_checks = [0.5, 1.0, 2.0, 5.0]
-d0_pass_checks = [10, 20, 50, 100]
-d0_min_check = 2
-passes_d0 = 0
-track_low_cut = 2
-max_track_eff = 1
-seed(1)
-doTest = True
-use_slope_eff = False
-#=====================================================================================================
 
 pt_cuts = []
 d0_cuts = []
@@ -43,6 +61,7 @@ for i in range(len(pt_pass_checks)):
 
 
 lifetime_list = []
+clifetime_list = []
 zero = numpy.array([0, 0, 0])
 data_list = []
 cutflow_list = []
@@ -86,12 +105,17 @@ def findBSMParticles(truthparticles, PDGID=None, decays=False) :
     #print("Start")
     BSM_particles = []
 
+
     for iparticle,particle in enumerate(truthparticles):
         # Handed it a PDG ID?
         if PDGID :
             #if (abs(particle.pid)==PDGID and particle.status==62) :
-            if abs(particle.pid) not in PDGID:
-                continue
+            if model == higgs:
+                if abs(particle.pid) != PDGID:
+                    continue
+            elif model == staus:
+                if abs(particle.pid) not in PDGID:
+                    continue
 
         # Otherwise, interested in SUSY particles only
         elif abs(particle.pid) < 999999:
@@ -143,6 +167,22 @@ def dfs_paths(stack, particle, stable_particles = []):
     stack.pop()
 
 
+def get_lifetime(lifetime_string):
+    lifetime = lifetime_string.replace("p",".").strip("ns")
+    print(lifetime)
+    return float(lifetime)
+
+def getlifetime_fname(fname):
+
+    dirname = fname.split("/")[-2]
+    tokens = dirname.split("_")
+    if 'stable' in tokens:
+        return 100000000
+    lt = get_lifetime(tokens[3])
+    print(lt)
+    return lt
+
+
 # Only works if you decayed the parent in the generation
 # step, or you're running this on a post-simulation xAOD
 def findBSMDecayProducts(particle,charge_eta=True) :
@@ -161,55 +201,44 @@ def findBSMDecayProducts(particle,charge_eta=True) :
 #**************************************************************************************************************************
 
 def findGoodTrackCount(pt, ptcut, d0, d0cut, use_slope_eff=True):
-    temp = [0, 0, 0]
-    #rng_check = random()
-    #print(rng_check)
-    if pt > ptcut:
-        temp[0] = 1
-    #if pt > ptcut and rng_check < max_track_eff:
-        #temp[0] = 1
-    #if d0 < d0cut and d0 > d0_min_check:
-    if d0 > d0_min_check and passes_d0_cut(d0, d0cut, use_slope_eff):
-       temp[1] = 1
-    if (pt > ptcut and passes_d0 < d0cut and passes_d0 > d0_min_check):
-        temp[2] = 1
+    passes_pt = pt > ptcut
+    passes_d0 = d0 > d0_min_check and passes_d0_cut(d0, d0cut, use_slope_eff)
+    temp = [passes_pt, passes_d0, passes_pt and passes_d0]
     return temp
 
 def passes_d0_cut(d0, d0cut, use_slope_eff):
     # Checks maximum value cut
     rng_check = random()
     if not use_slope_eff:
-        print("doesnt use slope")
-        print("rng", rng_check)
-        print("max_track_eff", max_track_eff)
-        print("passes check", d0 < d0cut and rng_check < max_track_eff)
+        #print("doesnt use slope")
+        #print("rng", rng_check)
+        #print("max_track_eff", max_track_eff)
+        #print("passes check", d0 < d0cut and rng_check < max_track_eff)
         if d0 < d0cut and rng_check < max_track_eff:
-            passes_d0 = d0
             return True
         else: return False
     #Calculates efficiency using line
-    #TODO define slope and yinter)
     y_inter = max_track_eff
     effslope = -max_track_eff/d0cut
     eff = effslope*d0 + y_inter
-    print("uses slope")
-    print("rng", rng_check)
-    print("eff", eff)
-    print("passes check", rng_check < eff)
     if rng_check < eff:
-        passes_d0 = d0
         return True
     else: return False
 
 
 
-
-
-
 #File Level Start ===================================================================================================
+print(file_list)
+file_list.sort(key=lambda fname: getlifetime_fname(fname))
+
+print(file_list)
 
 for m in range(len(file_list)):
     print(len(file_list))
+    if 'stable' in file_list[m]:
+        print("skipping stable lifetimes")
+        print(file_list[m])
+        continue
     infile = file_list[m]
     n += 1
     seen_event_count = 0
@@ -232,12 +261,19 @@ for m in range(len(file_list)):
     with hep.open(infile) as f:
         dirname = infile.split("/")[-2]
         tokens = dirname.split("_")
+        #tokens[3].sort(key=float)
         #CHANGE THIS BACK WHEN SWITCHING FROM ONLY TAUS!!!!!!!
         #mPar = tokens[1]
-        mChild  = int(tokens[1])
+        if model == staus:
+            mChild  = int(tokens[1])
+        if model == higgs:
+            mChild = int(tokens[2])
         lifetime = tokens[3]
+        clifetime = get_lifetime(tokens[3])
+
         if lifetime not in lifetime_list:
             lifetime_list.append(lifetime)
+            clifetime_list.append(clifetime)
     # if mChild not in mass_order_tracking:
     #   mass_order_tracking.append(mChild)
 
@@ -248,7 +284,7 @@ for m in range(len(file_list)):
             evt = f.read()
             if not evt:
                 break
-            if doTest and evt.event_number > 100:
+            if doTest and len(file_list)<3 and evt.event_number > 100:
                 break
 
             if evt.event_number % 1000 == 0:
@@ -275,7 +311,10 @@ for m in range(len(file_list)):
 
 
             #finds all the BSM pdgid 35 particles that decay into something else
-            BSM_particles = findBSMParticles(evt.particles, PDGID = [1000015, 2000015])
+            if model == higgs:
+                BSM_particles = findBSMParticles(evt.particles, PDGID = 35)
+            elif model == staus:
+                BSM_particles = findBSMParticles(evt.particles, PDGID = [1000015, 2000015])
 
 
 
@@ -380,7 +419,7 @@ for m in range(len(file_list)):
 
     for i in range(len(efficiencies)):
         for j in range(len(efficiencies[i])):
-            data_list.append({"cmass": mChild, "lifetime": lifetime, "pt": pt_pass_checks[i], "d0": d0_pass_checks[j],
+            data_list.append({"cmass": mChild, "lifetime": lifetime, "clifetime": clifetime, "pt": pt_pass_checks[i], "d0": d0_pass_checks[j],
                     "efficiency": efficiencies[i][j], "error": errors[i][j]})
 
     cf_dict = {"cmass": mChild, "lifetime": lifetime, "events": event_count, "seen": seen_event_count}
@@ -397,21 +436,21 @@ for m in range(len(file_list)):
             "energy": energy_list, "decay distance": dec_dist_list,
             "trans decay distance": trans_dec_dist_list})
 
-    print("Done with file ", n, " of 36.")
+    print("Done with ", model, " file ", n, " of ", len(file_list))
 
     if doTest: break
 
 #File Level End =====================================================================================================
 
 data = {"data": data_list, "cutflow": cutflow_list, "hist": histogram_list, "lifetimes": lifetime_list,
-        "pts": pt_pass_checks, "d0s": d0_pass_checks, "str_pts": pt_cuts, "str_d0s": d0_cuts, "str_both": full_cuts}
-save_name = 'stau_%dtrack_%.1fefficiencies.json'%(track_low_cut,max_track_eff)
+        "clifetimes": clifetime_list, "pts": pt_pass_checks, "d0s": d0_pass_checks, "str_pts": pt_cuts, "str_d0s": d0_cuts, "str_both": full_cuts}
+save_name = '%s_%dtrack_%.1feffs.json'%(model,track_low_cut,max_track_eff)
 if use_slope_eff and doTest:
-    save_name = 'test_stau_%dtrack_%.1fefficiencies_slope.json'%(track_low_cut,max_track_eff)
+    save_name = 'test_%s_%dtrack_%.1feffs_slope.json'%(model,track_low_cut,max_track_eff)
 elif doTest:
-    save_name = 'test_stau_%dtrack_%.1fefficiencies.json'%(track_low_cut,max_track_eff)
+    save_name = 'test_%s_%dtrack_%.1feffs.json'%(model,track_low_cut,max_track_eff)
 elif use_slope_eff:
-    save_name = 'stau_%dtrack_%.1fefficiencies_slope.json'%(track_low_cut,max_track_eff)
+    save_name = '%s_%dtrack_%.1feffs_slope.json'%(model,track_low_cut,max_track_eff)
 with open(save_name, 'w') as fp:
     json.dump(data, fp)
 

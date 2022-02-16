@@ -4,9 +4,19 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import uproot4 as uproot
+import scipy.interpolate
+import math
+from scipy.interpolate import griddata
+from scipy.interpolate import interpn
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
                                AutoMinorLocator)
 
+from matplotlib import colors as mcolors
+import colorsys
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+
+plt.ioff()
 
 def argsort(seq):
     return sorted(range(len(seq)), key=seq.__getitem__)
@@ -14,19 +24,31 @@ def argsort(seq):
 event_count = 10000
 check = 1
 
+#change to true if you want to run a certain section of the plotting code
 do_avg = False
 do_hist = False
 do_cutflow = False
-do_eff = True
+do_eff = False
+do_contour = True
+
+#track efficiency defined in stau_eff.py
 track_eff = 1
-track_low_cut = 2
+
+#change to true if you only want to run one graph instead of all
 doTest = False
-use_slope_eff = False
+pre = ""
+if doTest:
+    pre = "test_"
+
+#change to true if use_slope_eff was used in stau_eff.py
+use_slope_eff = True
 append = ""
 if use_slope_eff:
     append = "_slope"
 
+#creates empty lists of lifetimes, pts, d0s, and masses
 lt_list = []
+clt_list = []
 pt_list = []
 d0_list = []
 mass_list = []
@@ -40,13 +62,26 @@ cf_cats_pt = ["events", "seen"]
 cf_cats_d0 = ["events", "seen"]
 cf_cats_both = ["events", "seen"]
 
-print("testing")
+#user inputs either higgs or staus based on what model they are using
+model = input('higgs or staus: ')
+higgs = 'higgs'
+staus = 'staus'
+print(model)
+if model == higgs:
+    track_low_cut = 5
+    f = open('%s%s_%dtrack_%.1feffs%s.json'%(pre,model,track_low_cut,track_eff,append))
+    data = json.load(f)
+elif model == staus:
+    track_low_cut = 2
+    #f = open('%s%s_%dtrack_%.1feffs%s.json'%(pre,model,track_low_cut,track_eff,append))
+    f = open('%s%s_%dtrack_%.1feffs%s.json'%(pre,model,track_low_cut,track_eff,append))
+    data = json.load(f)
 
-f = open('stau_%dtrack_%.1fefficiencies%s.json'%(track_low_cut,track_eff,append))
-data = json.load(f)
-
+#fills the lists from the values in the .json data file
 for i in data["lifetimes"]:
     lt_list.append(i)
+for i in data["clifetimes"]:
+    clt_list.append(i)
 for i in data["pts"]:
     pt_list.append(i)
 for i in data["d0s"]:
@@ -61,16 +96,25 @@ mass_list.sort()
 cmasses = np.zeros((len(lt_list), len(pt_list), len(d0_list), len(mass_list))) * np.nan
 efficiencies = np.zeros((len(lt_list), len(pt_list), len(d0_list), len(mass_list))) * np.nan
 errors = np.zeros((len(lt_list), len(pt_list), len(d0_list), len(mass_list))) * np.nan
+clifetimes = np.zeros((len(mass_list), len(pt_list), len(d0_list), len(clt_list))) * np.nan
+cefficiencies = np.zeros((len(mass_list), len(pt_list), len(d0_list), len(clt_list))) * np.nan
+cerrors = np.zeros((len(mass_list), len(pt_list), len(d0_list), len(clt_list))) * np.nan
+#twodeffs = np.zeros((len(pt_list), len(d0_list), len(mass_list), len(clt_list))) * np.nan
 
 # Collect efficiency data in array
 for i in data["data"]:
     L = lt_list.index(i["lifetime"])
+    C = clt_list.index(i["clifetime"])
     P = pt_list.index(i["pt"])
     D = d0_list.index(i["d0"])
     M = mass_list.index(i["cmass"])
     cmasses[L][P][D][M] = i["cmass"]
     efficiencies[L][P][D][M] = i["efficiency"]
     errors[L][P][D][M] = i["error"]
+    clifetimes[M][P][D][C] = i["clifetime"]
+    cefficiencies[M][P][D][C] = i["efficiency"]
+    cerrors[M][P][D][C] = i["error"]
+    twodeffs = np.swapaxes(cefficiencies,0,2)
 
 
 # Structure: [lifetime][mass]
@@ -156,14 +200,43 @@ print(cf_values_pt[0])
 f.close()
 
 
+def manual_cmap(cmap, value=1.):
+    colors = cmap(np.arange(cmap.N))
+    hls = np.array([colorsys.rgb_to_hls(*c) for c in colors[:,:3]])
+    hls[:,1] *= value
+    rgb = np.clip(np.array([colorsys.hls_to_rgb(*c) for c in hls]), 0,1)
+    print("color did it one")
+    return mcolors.LinearSegmentedColormap.from_list("", rgb)
+    print("color did it")
 
 #EFFICIENCY PLOTS
 #-----------------
 if do_eff:
     if use_slope_eff:
-        print("did it")
+        print("used slope eff")
+# X axis lifetime transvese momentum efficiency plots
+    print("pt eff plots-x axis lifetime")
+    for i in range(len(mass_list)):
+        for j in range(len(pt_list)):
+            fig,axs = plt.subplots()
+            axs.set_title("Mass: " + str(mass_list[i]) + ", Transverse Momentum: " + str(pt_list[j]) + " GeV")
+            axs.set_xlabel("Lifetime (ns)")
+            axs.set_ylabel("Efficiency")
+
+            for k in range(len(d0_list)):
+                print(clifetimes[i][j][k])
+                axs.errorbar(clifetimes[i][j][k], cefficiencies[i][j][k], yerr = cerrors[i][j][k], label = "d0 < " + str(d0_list[k]) + " mm", marker = "o", alpha = 0.5)
+            axs.set_xscale('log')
+            axs.legend(fontsize = "small", frameon = False)
+            fig.savefig('plots/%s%dtrack_%.1feff_%s_eff%s_'%(pre,track_low_cut,track_eff,model,append) + str(mass_list[i]) + '_pt' + str(pt_list[j]) + '.pdf' )
+            if doTest: break
+        if doTest: break
+
+if do_eff:
+    if use_slope_eff:
+        print("used slope eff")
 # Fixed transvese momentum efficiency plots
-    print("pt eff plots")
+    print("pt eff plots-x axis mass")
     for i in range(len(lt_list)):
         for j in range(len(pt_list)):
             fig,axs = plt.subplots()
@@ -173,12 +246,28 @@ if do_eff:
             for k in range(len(d0_list)):
                 axs.errorbar(cmasses[i][j][k], efficiencies[i][j][k], yerr = errors[i][j][k], label = "d0 < " + str(d0_list[k]) + " mm", marker = "o", alpha = 0.5)
             axs.legend(fontsize = "small", frameon = False)
-            fig.savefig('plots/%dtrack_%.1feff_stau_eff_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_pt' + str(pt_list[j]) + '.pdf' )
-            if doTest: break
-        if doTest: break
+            fig.savefig('plots/%s%dtrack_%.1feff_%s_eff%s_'%(pre,track_low_cut,track_eff,model,append) + str(lt_list[i]) + '_pt' + str(pt_list[j]) + '.pdf' )
+            #if doTest: break
+        #if doTest: break
 
 # Fixed d0 efficiency plots
-    print("d0 eff plots")
+    print("d0 eff plots-x axis lifetime")
+# X axis lifetime d0 efficiency plots
+    for i in range(len(mass_list)):#used to be lt
+        for j in range(len(d0_list)):
+            fig, axs = plt.subplots()
+            axs.set_title("Mass: " + str(mass_list[i]) + ", d0: " + str(d0_list[j]) + " mm")#used to be lt
+            axs.set_xlabel("Lifetime (ns)")#used to be mass
+            axs.set_ylabel("Efficiency")
+            for k in range(len(pt_list)):
+                axs.errorbar(clifetimes[i][k][j], cefficiencies[i][k][j], yerr = cerrors[i][k][j], label = "pt > " + str(pt_list[k]) + " GeV", marker = "o", alpha = 0.5)
+            axs.legend(fontsize = "small", frameon = False)
+            fig.savefig('plots/%s%dtrack_%.1feff_%s_eff%s_'%(pre,track_low_cut,track_eff,model,append) + str(mass_list[i]) + '_d0' + str(d0_list[j]) + '.pdf' )
+            #if doTest: break
+        #if doTest: break
+
+# Fixed d0 efficiency plots
+    print("d0 eff plots-x axis mass")
     for i in range(len(lt_list)):
         for j in range(len(d0_list)):
             fig, axs = plt.subplots()
@@ -188,10 +277,9 @@ if do_eff:
             for k in range(len(pt_list)):
                 axs.errorbar(cmasses[i][k][j], efficiencies[i][k][j], yerr = errors[i][k][j], label = "pt > " + str(pt_list[k]) + " GeV", marker = "o", alpha = 0.5)
             axs.legend(fontsize = "small", frameon = False)
-            fig.savefig('plots/%dtrack_%.1feff_stau_eff_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_d0' + str(d0_list[j]) + '.pdf' )
+            fig.savefig('plots/%s%dtrack_%.1feff_%s_eff%s_'%(pre,track_low_cut,track_eff,model,append) + str(lt_list[i]) + '_d0' + str(d0_list[j]) + '.pdf' )
             if doTest: break
         if doTest: break
-
 
 # AVERAGES PLOTS
 #---------------------
@@ -205,7 +293,7 @@ if do_avg:
         axs.set_xlabel("Mass (GeV)")
         axs.set_ylabel("Average Energy (GeV)")
         axs.errorbar(avg_mass[i], avg_energy[i])
-        fig.savefig('plots/%dtrack_%.1feff_stau_avg_energy_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '.pdf' )
+        fig.savefig('plots/%s%dtrack_%.1feff_%s_avg_energy%s_'%(pre,track_low_cut,track_eff,model,append) + str(lt_list[i]) + '.pdf' )
         if doTest: break
 
 # Average displacement plots
@@ -216,7 +304,7 @@ if do_avg:
         axs.set_xlabel("Mass (GeV)")
         axs.set_ylabel("Average Displacement (mm)")
         axs.errorbar(avg_mass[i], avg_dist[i])
-        fig.savefig('plots/%dtrack_%.1feff_stau_avg_dist_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '.pdf' )
+        fig.savefig('plots/%s%dtrack_%.1feff_%s_avg_dist%s_'%(pre,track_low_cut,track_eff,model,append) + str(lt_list[i]) + '.pdf' )
         if doTest: break
 
 # Average pt plots
@@ -227,7 +315,7 @@ if do_avg:
         axs.set_xlabel("Mass (GeV)")
         axs.set_ylabel("Average Transverse Momentum (GeV)")
         axs.errorbar(avg_mass[i], avg_pt[i])
-        fig.savefig('plots/%dtrack_%.1feff_stau_avg_pt_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '.pdf' )
+        fig.savefig('plots/%s%dtrack_%.1feff_%s_avg_pt%s_'%(pre,track_low_cut,track_eff,model,append) + str(lt_list[i]) + '.pdf' )
         if doTest: break
 
 # Average d0 plots
@@ -238,15 +326,139 @@ if do_avg:
         axs.set_xlabel("Mass (GeV)")
         axs.set_ylabel("Average d0 (mm)")
         axs.errorbar(avg_mass[i], avg_d0[i])
-        fig.savefig('plots/%dtrack_%.1feff_stau_avg_d0_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '.pdf' )
+        fig.savefig('plots/%s%dtrack_%.1feff_%s_avg_d0%s_'%(pre,track_low_cut,track_eff,model,append) + str(lt_list[i]) + '.pdf' )
         if doTest: break
-
 
 
 # GENERAL HISTOGRAMS
 #--------------------
-if do_hist:
+if do_contour and model==staus:
 
+    print("2D mass vs lifetime no hist")
+    for i in range(len(d0_list)):
+        for j in range(len(pt_list)):
+
+            myjet = manual_cmap(plt.cm.get_cmap("rainbow"), 1.2)
+            xArray = []
+            yArray = []
+            zArray = []
+
+            twodeffsel = twodeffs[i][j]
+
+            for k in range(len(mass_list)):
+                for l in range(len(clt_list)):
+                    if np.isnan(twodeffsel[k][l]) : continue
+                    xArray.append(mass_list[k])
+                    yArray.append(clt_list[l])
+                    zArray.append(twodeffsel[k][l])
+
+                    '''print("in the loop")
+                    twodeffsel = twodeffs[D][P]
+                    print("length of twodefsel is ", len(twodeffsel))
+                    xArray = mass_list
+                    print("length of mass_list is ", len(xArray))
+                    yArray = clt_list
+                    print("length of clt_list is ", len(yArray))
+                    zArray = [[L for L in twodeffsel[M]]]
+                    print("length of twodefsel[m][l] is ", len(zArray))
+                    '''
+            ytmp = []
+            for y in yArray:
+                ytmp.append(math.log(y))
+            yArray = ytmp
+            xArray = np.array(xArray)
+            yArray = np.array(yArray)
+            zArray = np.array(zArray)
+            #print("masslist shape", xArray.shape)
+            #print("lifetimelist shape", yArray.shape)
+            #print("both shape", zArray.shape)
+            #print(xArray,yArray,zArray)
+            xlinspace = np.linspace(100,600,500)
+            ylinspace = np.linspace(-3,0,500)
+            xymeshgrid = np.meshgrid(xlinspace,ylinspace)
+            ZI = scipy.interpolate.griddata((xArray,yArray), zArray, (xymeshgrid[0],xymeshgrid[1]), method="cubic")
+
+            fig, ax = plt.subplots(figsize=(6, 4) )
+            plt.pcolor(xymeshgrid[0], xymeshgrid[1], ZI, vmax=1, vmin=0, rasterized=True,cmap=myjet,alpha=1)
+            cbar = plt.colorbar()
+            cbar.set_label("Efficiency", rotation=270, labelpad=10)
+
+
+            CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0], colors="k", rasterized=True)
+            plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
+            plt.xlabel(r"Mass (GeV)")
+            plt.ylabel(r"Log of Lifetime (ns)")
+            plt.title("")
+            plt.grid(alpha=0.2, which="major")
+            plt.grid(alpha=0.1, which="minor")
+            label = "d$_{\mathrm{0}}$: " + \
+                "{:} mm\n".format(d0_list[i]) + \
+                "p$_{\mathrm{t}}$: " + \
+                "{:} GeV".format(pt_list[j])
+            props = dict(boxstyle='round', facecolor="white", alpha = 0.5)
+            plt.text (420, -2.5, label, bbox= props)
+            ax.set_yticklabels(['0.001','','0.01','','0.1','','1'])
+            fig.savefig('plots/%s/%dtrack_%.1feff_%smvslt%s_'%(pre,track_low_cut,track_eff,model,append) + str(d0_list[i])+ '_' + str(pt_list[j])+'.pdf')
+
+if do_contour and model==higgs:
+
+    print("2D mass vs lifetime no hist")
+    for i in range(len(d0_list)):
+        for j in range(len(pt_list)):
+
+            myjet = manual_cmap(plt.cm.get_cmap("rainbow"), 1.2)
+            xArray = []
+            yArray = []
+            zArray = []
+
+            twodeffsel = twodeffs[i][j]
+
+            for k in range(len(mass_list)):
+                for l in range(len(clt_list)):
+                    if np.isnan(twodeffsel[k][l]) : continue
+                    xArray.append(mass_list[k])
+                    yArray.append(clt_list[l])
+                    zArray.append(twodeffsel[k][l])
+
+            ytmp = []
+            for y in yArray:
+                ytmp.append(math.log(y))
+            yArray = ytmp
+            xArray = np.array(xArray)
+            yArray = np.array(yArray)
+            zArray = np.array(zArray)
+            #print("masslist shape", xArray.shape)
+            #print("lifetimelist shape", yArray.shape)
+            #print("both shape", zArray.shape)
+            #print(xArray,yArray,zArray)
+            xlinspace = np.linspace(5,55,500)
+            ylinspace = np.linspace(-3,0,500)
+            xymeshgrid = np.meshgrid(xlinspace,ylinspace)
+            ZI = scipy.interpolate.griddata((xArray,yArray), zArray, (xymeshgrid[0],xymeshgrid[1]), method="cubic")
+
+            fig, ax = plt.subplots(figsize=(6, 4) )
+            plt.pcolor(xymeshgrid[0], xymeshgrid[1], ZI, vmax=1, vmin=0, rasterized=True,cmap=myjet,alpha=1)
+            cbar = plt.colorbar()
+            cbar.set_label("Efficiency", rotation=270, labelpad=10)
+
+
+            CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0], colors="k", rasterized=True)
+            plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
+            plt.xlabel(r"Mass (GeV)")
+            plt.ylabel(r"Log of Lifetime (ns)")
+            plt.title("")
+            plt.grid(alpha=0.2, which="major")
+            plt.grid(alpha=0.1, which="minor")
+            label = "d$_{\mathrm{0}}$: " + \
+                "{:} mm\n".format(d0_list[i]) + \
+                "p$_{\mathrm{t}}$: " + \
+                "{:} GeV".format(pt_list[j])
+            props = dict(boxstyle='round', facecolor="white", alpha = 0.5)
+            plt.text (40, -.5, label, bbox= props)
+            ax.set_yticklabels(['0.001','','0.01','','0.1','','1'])
+            fig.savefig('plots/%s/%dtrack_%.1feff_%smvslt%s_'%(pre,track_low_cut,track_eff,model,append) + str(d0_list[i])+ '_' + str(pt_list[j])+'.pdf')
+            print("saved it!")
+if do_hist:
 # Energy Histogram
     print("energy hist")
     for i in range(len(lt_list)):
@@ -265,7 +477,7 @@ if do_hist:
             width = bincenters[-1]/len(bincenters)*0.7
             menStd = np.sqrt(y)
             plt.bar(bincenters, y, width=width, yerr=menStd)
-            fig.savefig('plots/%dtrack_%.1feff_stau_energy_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
+            fig.savefig('plots/%s%dtrack_%.1feff_%s_energy%s_'%(pre,track_low_cut,track_eff,model,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
             if doTest: break
         if doTest: break
 
@@ -287,7 +499,7 @@ if do_hist:
             menStd = np.sqrt(y)
             width = 0.05
             plt.bar(bincenters, y, width=width, yerr=menStd)
-            fig.savefig('plots/%dtrack_%.1feff_stau_decay_dist_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
+            fig.savefig('plots/%s%dtrack_%.1feff_%s_decay_dist%s_'%(pre,track_low_cut,track_eff,model,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
             if doTest: break
         if doTest: break
 
@@ -310,7 +522,7 @@ if do_hist:
             menStd = np.sqrt(y)
             width = 0.05
             plt.bar(bincenters, y, width=width, yerr=menStd)
-            fig.savefig('plots/%dtrack_%.1feff_stau_trans_decay_dist_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
+            fig.savefig('plots/%s%dtrack_%.1feff_%s_trans_decay_dist%s_'%(pre,track_low_cut,track_eff,model,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
             if doTest: break
         if doTest: break
 
@@ -332,7 +544,7 @@ if do_hist:
             menStd = np.sqrt(y)
             width = 0.05
             plt.bar(bincenters, y, width=width, yerr=menStd)
-            fig.savefig('plots/%dtrack_%.1feff_stau_pt_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
+            fig.savefig('plots/%s%dtrack_%.1feff_%s_pt%s_'%(pre,track_low_cut,track_eff,model,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
             if doTest: break
         if doTest: break
 
@@ -354,7 +566,7 @@ if do_hist:
             menStd = np.sqrt(y)
             width = 0.05
             plt.bar(bincenters, y, width=width, yerr=menStd)
-            fig.savefig('plots/%dtrack_%.1feff_stau_d0_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
+            fig.savefig('plots/%s%dtrack_%.1feff_%s_d0%s_'%(pre,track_low_cut,track_eff,model,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
             if doTest: break
         if doTest: break
 
@@ -375,7 +587,7 @@ if do_hist:
             menStd = np.sqrt(y)
             width = 0.05
             plt.bar(bincenters, y, width=width, yerr=menStd)
-            fig.savefig('plots/%dtrack_%.1feff_stau_eta_%s'%(track_low_cut,track_eff,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
+            fig.savefig('plots/%s%dtrack_%.1feff_%s_eta%s_'%(pre,track_low_cut,track_eff,model,append) + str(lt_list[i]) + '_' + str(mass_list[j]) + '.pdf' )
             if doTest: break
         if doTest: break
 
@@ -393,7 +605,7 @@ if do_cutflow:
         axs.set_ylabel("Events")
         axs.set_yscale("log")
         axs.bar(cf_cats_pt, cf_values_pt[i])
-        fig.savefig('plots/%dtrack_%.1feff_stau_cf_pT_%s'%(track_low_cut,track_eff,append) + str(cf_masses[i]) + '_' + str(cf_lifetimes[i]) + '.pdf' )
+        fig.savefig('plots/%s%dtrack_%.1feff_%s_cf_pT%s_'%(pre,track_low_cut,track_eff,model,append) + str(cf_masses[i]) + '_' + str(cf_lifetimes[i]) + '.pdf' )
         if doTest: break
 
 # d0 Cutflow Histograms
@@ -404,7 +616,7 @@ if do_cutflow:
         axs.set_ylabel("Events")
         axs.set_yscale("log")
         axs.bar(cf_cats_d0, cf_values_d0[i])
-        fig.savefig('plots/%dtrack_%.1feff_stau_cf_d0_%s'%(track_low_cut,track_eff,append) + str(cf_masses[i]) + '_' + str(cf_lifetimes[i]) + '.pdf' )
+        fig.savefig('plots/%s%dtrack_%.1feff_%s_cf_d0%s_'%(pre,track_low_cut,track_eff,model,append) + str(cf_masses[i]) + '_' + str(cf_lifetimes[i]) + '.pdf' )
         if doTest: break
 
 # Full Cutflow Histograms
@@ -415,6 +627,6 @@ if do_cutflow:
         axs.set_yscale("log")
         plt.xticks(rotation = 30)
         axs.bar(cf_cats_both, cf_values_both[i])
-        fig.savefig('plots/%dtrack_%.1feff_stau_cf_fullcuts_%s'%(track_low_cut,track_eff,append) + str(cf_masses[i]) + '_' + str(cf_lifetimes[i]) + '.pdf' )
+        fig.savefig('plots/%s%dtrack_%.1feff_%s_cf_fullcuts%s_'%(pre,track_low_cut,track_eff,model,append) + str(cf_masses[i]) + '_' + str(cf_lifetimes[i]) + '.pdf' )
         if doTest: break
 
