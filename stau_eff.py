@@ -336,23 +336,6 @@ for m in range(len(file_list)):
                     dec_dist = numpy.sqrt(numpy.square(point[0]) + numpy.square(point[1]) + numpy.square(point[2]))
                     trans_dec_dist = numpy.sqrt(numpy.square(point[0]) + numpy.square(point[1]))
 
-                    # Other Stage 1 Checks
-                    tdd_check = True
-                    if trans_dec_dist >= 300:
-                        tdd_check = False
-                    if trans_dec_dist < 1:
-                        tdd_check = False
-                    dec_vtx_check = True
-                    if part.end_vertex:
-                        decvtx = part.end_vertex
-                        decfourvec = decvtx.position
-                        decpoint = numpy.array([decfourvec.x, decfourvec.y, decfourvec.z])
-                        prod_dec_dist = numpy.array([decpoint[0] - point[0], decpoint[1] - point[1], decpoint[2] - point[2]])
-                        trans_prod_dec_dist = numpy.squt(numpy.square(prod_dec_dist[0]) + nupy.square(prod_dec_dist[1]))
-                        if trans_prod_dec_dist < 200:
-                            dec_vtx_check = False
-
-
                     # Particle info
                     x = part.momentum.x
                     y = part.momentum.y
@@ -366,9 +349,30 @@ for m in range(len(file_list)):
                     line_point = hat * 10 + point
                     d = numpy.cross(point - line_point, zero - line_point) / numpy.linalg.norm(point - line_point)
                     d_mag = numpy.sqrt(numpy.square(d[0]) + numpy.square(d[1]))
+                    
+                    # Other Stage 1 Checks
+                    tdd_check = True
+                    d_mag_check = True
+                    mom_mag_check = True
+                    if trans_dec_dist >= 300:
+                        tdd_check = False
+                    if d_mag < 1:
+                        d_mag_check = False
+                    if mom_mag < 0.5:
+                        mom_mag_check = False
+                    dec_vtx_check = True
+                    if part.end_vertex:
+                        decvtx = part.end_vertex
+                        decfourvec = decvtx.position
+                        decpoint = numpy.array([decfourvec.x, decfourvec.y, decfourvec.z])
+                        prod_dec_dist = numpy.array([decpoint[0] - point[0], decpoint[1] - point[1], decpoint[2] - point[2]])
+                        trans_prod_dec_dist = numpy.squt(numpy.square(prod_dec_dist[0]) + nupy.square(prod_dec_dist[1]))
+                        if trans_prod_dec_dist < 200:
+                            dec_vtx_check = False
+
 
                     # If pass all step 1 cuts:
-                    if (tdd_check == True and dec_vtx_check == True):
+                    if (tdd_check == True and d_mag_check ==True and mom_mag_check == True and dec_vtx_check == True):
                         tracks += 1
 
                         # Update tracking lists
