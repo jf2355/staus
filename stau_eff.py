@@ -22,6 +22,7 @@ if model == higgs:
     pt_pass_checks = [0.5, 1.0, 2.0, 5.0, 10.0]
     d0_pass_checks = [10, 20, 50, 100]
     d0_min_check = 1
+    pt_min_check = 0.5
     track_low_cut = 5
     max_track_eff = 1
     seed(1)
@@ -35,6 +36,7 @@ elif model == staus:
     pt_pass_checks = [0.5, 1.0, 2.0, 5.0, 10.0]
     d0_pass_checks = [10, 20, 50, 100]
     d0_min_check = 1
+    pt_min_check = 0.5
     track_low_cut = 2
     max_track_eff = 1
     seed(1)
@@ -201,9 +203,10 @@ def findBSMDecayProducts(particle,charge_eta=True) :
 #**************************************************************************************************************************
 
 def findGoodTrackCount(pt, ptcut, d0, d0cut, use_slope_eff=True):
-    passes_pt = pt > ptcut
-    #passes_d0 = d0 > d0_min_check and passes_d0_cut(d0, d0cut, use_slope_eff)
-    passes_d0 = passes_d0_cut(d0, d0cut, use_slope_eff)
+    passes_pt = pt > pt_min_check and pt > ptcut
+    #passes_pt = pt > ptcut
+    passes_d0 = d0 > d0_min_check and passes_d0_cut(d0, d0cut, use_slope_eff)
+    #passes_d0 = passes_d0_cut(d0, d0cut, use_slope_eff)
     temp = [passes_pt, passes_d0, passes_pt and passes_d0]
     return temp
 
