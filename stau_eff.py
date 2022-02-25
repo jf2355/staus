@@ -203,10 +203,10 @@ def findBSMDecayProducts(particle,charge_eta=True) :
 #**************************************************************************************************************************
 
 def findGoodTrackCount(pt, ptcut, d0, d0cut, use_slope_eff=True):
-    passes_pt = pt > pt_min_check and pt > ptcut
-    #passes_pt = pt > ptcut
-    passes_d0 = d0 > d0_min_check and passes_d0_cut(d0, d0cut, use_slope_eff)
-    #passes_d0 = passes_d0_cut(d0, d0cut, use_slope_eff)
+    #passes_pt = pt > pt_min_check and pt > ptcut
+    passes_pt = pt > ptcut
+    #passes_d0 = d0 > d0_min_check and passes_d0_cut(d0, d0cut, use_slope_eff)
+    passes_d0 = passes_d0_cut(d0, d0cut, use_slope_eff)
     temp = [passes_pt, passes_d0, passes_pt and passes_d0]
     return temp
 
