@@ -19,7 +19,7 @@ if model == higgs:
     file_list = glob.glob("/eos/user/k/kdipetri/Snowmass_HepMC/run_higgsportal/*/events.hepmc")
     #file_list = glob.glob("/eos/user/j/jefarr/run_higgsportal/*/events.hepmc")
     #Hardcoded stuff, change this section ===============================================================
-    pt_pass_checks = [0.5, 1.0, 2.0, 5.0]
+    pt_pass_checks = [0.5, 1.0, 2.0, 5.0, 10.0]
     d0_pass_checks = [10, 20, 50, 100]
     d0_min_check = 1
     track_low_cut = 5
@@ -32,7 +32,7 @@ elif model == staus:
     file_list = glob.glob("/eos/user/k/kdipetri/Snowmass_HepMC/run_staus/*/events.hepmc")
     #file_list = glob.glob("/eos/user/j/jefarr/run_staus/*/events.hepmc")
     #Hardcoded stuff, change this section ===============================================================
-    pt_pass_checks = [0.5, 1.0, 2.0, 5.0]
+    pt_pass_checks = [0.5, 1.0, 2.0, 5.0, 10.0]
     d0_pass_checks = [10, 20, 50, 100]
     d0_min_check = 1
     track_low_cut = 2
@@ -202,7 +202,8 @@ def findBSMDecayProducts(particle,charge_eta=True) :
 
 def findGoodTrackCount(pt, ptcut, d0, d0cut, use_slope_eff=True):
     passes_pt = pt > ptcut
-    passes_d0 = d0 > d0_min_check and passes_d0_cut(d0, d0cut, use_slope_eff)
+    #passes_d0 = d0 > d0_min_check and passes_d0_cut(d0, d0cut, use_slope_eff)
+    passes_d0 = passes_d0_cut(d0, d0cut, use_slope_eff)
     temp = [passes_pt, passes_d0, passes_pt and passes_d0]
     return temp
 
@@ -336,6 +337,8 @@ for m in range(len(file_list)):
                     tdd_check = True
                     if trans_dec_dist >= 300:
                         tdd_check = False
+                    if trans_dec_dist < 1:
+                        tdd_check = False
                     dec_vtx_check = True
                     if part.end_vertex:
                         decvtx = part.end_vertex
@@ -390,7 +393,7 @@ for m in range(len(file_list)):
 
     #Particle Level End ===========================================================================================
 
-            if tracks > 0:
+            if tracks > 1:
                 seen_event_count += 1
             for i in range(len(event_pt_ok_list)):
                 if event_pt_ok_list[i] >= track_low_cut:
