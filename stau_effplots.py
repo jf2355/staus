@@ -25,10 +25,10 @@ event_count = 10000
 check = 1
 
 #change to true if you want to run a certain section of the plotting code
-do_avg = False
-do_hist = False
-do_cutflow = False
-do_eff = False
+do_avg = True
+do_hist = True
+do_cutflow = True
+do_eff = True
 do_acc = True
 do_contour = True
 
