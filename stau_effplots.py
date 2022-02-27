@@ -29,6 +29,7 @@ do_avg = False
 do_hist = False
 do_cutflow = False
 do_eff = False
+do_acc = True
 do_contour = True
 
 #track efficiency defined in stau_eff.py
@@ -99,7 +100,10 @@ errors = np.zeros((len(lt_list), len(pt_list), len(d0_list), len(mass_list))) * 
 clifetimes = np.zeros((len(mass_list), len(pt_list), len(d0_list), len(clt_list))) * np.nan
 cefficiencies = np.zeros((len(mass_list), len(pt_list), len(d0_list), len(clt_list))) * np.nan
 cerrors = np.zeros((len(mass_list), len(pt_list), len(d0_list), len(clt_list))) * np.nan
+seen_event_list = np.zeros((len(mass_list), len(clt_list)))*np.nan
+event_list = np.zeros((len(mass_list), len(clt_list)))*np.nan
 #twodeffs = np.zeros((len(pt_list), len(d0_list), len(mass_list), len(clt_list))) * np.nan
+
 
 # Collect efficiency data in array
 for i in data["data"]:
@@ -115,7 +119,15 @@ for i in data["data"]:
     cefficiencies[M][P][D][C] = i["efficiency"]
     cerrors[M][P][D][C] = i["error"]
     twodeffs = np.swapaxes(cefficiencies,0,2)
+for i in data["cutflow"]:
+    L = lt_list.index(i["lifetime"])
+    C = clt_list.index(i["clifetime"])
+    M = mass_list.index(i["cmass"])
+    seen_event_list[M][C] = i["seen"]
+    event_list[M][C] = i["events"]
 
+acc = np.divide(seen_event_list,event_list)
+print(acc)
 
 # Structure: [lifetime][mass]
 avg_mass = np.zeros((len(lt_list), len(mass_list))) * np.nan
@@ -177,6 +189,7 @@ for i in range(len(data["str_both"])):
 
 
 for i in data["cutflow"]:
+
     cf_masses.append(i["cmass"])
     cf_lifetimes.append(i["lifetime"])
     temp_cf_values_pt = []
@@ -195,7 +208,7 @@ for i in data["cutflow"]:
     cf_values_d0.append(temp_cf_values_d0)
     cf_values_both.append(temp_cf_values_both)
 
-print(cf_values_pt[0])
+#print(cf_values_pt[0])
 
 f.close()
 
@@ -332,6 +345,60 @@ if do_avg:
 
 # GENERAL HISTOGRAMS
 #--------------------
+if do_contour and do_acc and model==staus:
+
+    print("2D mass vs lifetime no hist")
+
+    myjet = manual_cmap(plt.cm.get_cmap("rainbow"), 1.2)
+    xArray = []
+    yArray = []
+    zArray = []
+
+    for k in range(len(mass_list)):
+        for l in range(len(clt_list)):
+            if np.isnan(acc[k][l]) : continue
+            xArray.append(mass_list[k])
+            yArray.append(clt_list[l])
+            zArray.append(acc[k][l])
+
+    ytmp = []
+    for y in yArray:
+        ytmp.append(math.log(y))
+    yArray = ytmp
+    xArray = np.array(xArray)
+    yArray = np.array(yArray)
+    zArray = np.array(zArray)
+    #print("masslist shape", xArray.shape)
+    #print("lifetimelist shape", yArray.shape)
+    #print("both shape", zArray.shape)
+    #print(xArray,yArray,zArray)
+    xlinspace = np.linspace(100,600,500)
+    ylinspace = np.linspace(-3,0,500)
+    xymeshgrid = np.meshgrid(xlinspace,ylinspace)
+    ZI = scipy.interpolate.griddata((xArray,yArray), zArray, (xymeshgrid[0],xymeshgrid[1]), method="cubic")
+
+    fig, ax = plt.subplots(figsize=(6, 4) )
+    plt.pcolor(xymeshgrid[0], xymeshgrid[1], ZI, vmax=1, vmin=0, rasterized=True,cmap=myjet,alpha=1)
+    cbar = plt.colorbar()
+    cbar.set_label("Efficiency", rotation=270, labelpad=10)
+
+
+    CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0], colors="k", rasterized=True)
+    plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
+    plt.xlabel(r"Mass (GeV)")
+    plt.ylabel(r"Log of Lifetime (ns)")
+    plt.title("")
+    plt.grid(alpha=0.2, which="major")
+    plt.grid(alpha=0.1, which="minor")
+    #label = "d$_{\mathrm{0}}$: " + \
+        #"{:} mm\n".format(d0_list[i]) + \
+        #"p$_{\mathrm{t}}$: " + \
+        #"{:} GeV".format(pt_list[j])
+    #props = dict(boxstyle='round', facecolor="white", alpha = 0.5)
+    #plt.text (420, -2.5, label, bbox= props)
+    ax.set_yticklabels(['0.001','','0.01','','0.1','','1'])
+    fig.savefig('plots/%s/%dtrack_%.1feff_%smvsltACC%s_'%(pre,track_low_cut,track_eff,model,append) + '.pdf')
+
 if do_contour and model==staus:
 
     print("2D mass vs lifetime no hist")
@@ -403,6 +470,60 @@ if do_contour and model==staus:
 if do_contour and model==higgs:
 
     print("2D mass vs lifetime no hist")
+
+    myjet = manual_cmap(plt.cm.get_cmap("rainbow"), 1.2)
+    xArray = []
+    yArray = []
+    zArray = []
+
+    for k in range(len(mass_list)):
+        for l in range(len(clt_list)):
+            if np.isnan(acc[k][l]) : continue
+            xArray.append(mass_list[k])
+            yArray.append(clt_list[l])
+            zArray.append(acc[k][l])
+
+    ytmp = []
+    for y in yArray:
+        ytmp.append(math.log(y))
+    yArray = ytmp
+    xArray = np.array(xArray)
+    yArray = np.array(yArray)
+    zArray = np.array(zArray)
+    #print("masslist shape", xArray.shape)
+    #print("lifetimelist shape", yArray.shape)
+    #print("both shape", zArray.shape)
+    #print(xArray,yArray,zArray)
+    xlinspace = np.linspace(5,55,500)
+    ylinspace = np.linspace(-3,0,500)
+    xymeshgrid = np.meshgrid(xlinspace,ylinspace)
+    ZI = scipy.interpolate.griddata((xArray,yArray), zArray, (xymeshgrid[0],xymeshgrid[1]), method="cubic")
+
+    fig, ax = plt.subplots(figsize=(6, 4) )
+    plt.pcolor(xymeshgrid[0], xymeshgrid[1], ZI, vmax=1, vmin=0, rasterized=True,cmap=myjet,alpha=1)
+    cbar = plt.colorbar()
+    cbar.set_label("Efficiency", rotation=270, labelpad=10)
+
+
+    CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.92,0.94,0.96,0.98,1.0], colors="k", rasterized=True)
+    plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
+    plt.xlabel(r"Mass (GeV)")
+    plt.ylabel(r"Log of Lifetime (ns)")
+    plt.title("")
+    plt.grid(alpha=0.2, which="major")
+    plt.grid(alpha=0.1, which="minor")
+    #label = "d$_{\mathrm{0}}$: " + \
+        #"{:} mm\n".format(d0_list[i]) + \
+        #"p$_{\mathrm{t}}$: " + \
+        #"{:} GeV".format(pt_list[j])
+    #props = dict(boxstyle='round', facecolor="white", alpha = 0.5)
+    #plt.text (40, -.5, label, bbox= props)
+    ax.set_yticklabels(['0.001','','0.01','','0.1','','1'])
+    fig.savefig('plots/%s/%dtrack_%.1feff_%smvsltACC%s_'%(pre,track_low_cut,track_eff,model,append) + '.pdf')
+
+if do_contour and model==higgs:
+
+    print("2D mass vs lifetime no hist")
     for i in range(len(d0_list)):
         for j in range(len(pt_list)):
 
@@ -442,7 +563,7 @@ if do_contour and model==higgs:
             cbar.set_label("Efficiency", rotation=270, labelpad=10)
 
 
-            CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0], colors="k", rasterized=True)
+            CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.92,0.94,0.96,0.98,1.0], colors="k", rasterized=True)
             plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
             plt.xlabel(r"Mass (GeV)")
             plt.ylabel(r"Log of Lifetime (ns)")

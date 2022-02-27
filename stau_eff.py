@@ -349,7 +349,7 @@ for m in range(len(file_list)):
                     line_point = hat * 10 + point
                     d = numpy.cross(point - line_point, zero - line_point) / numpy.linalg.norm(point - line_point)
                     d_mag = numpy.sqrt(numpy.square(d[0]) + numpy.square(d[1]))
-                    
+
                     # Other Stage 1 Checks
                     tdd_check = True
                     d_mag_check = True
@@ -372,7 +372,7 @@ for m in range(len(file_list)):
 
 
                     # If pass all step 1 cuts:
-                    if (tdd_check == True and d_mag_check ==True and mom_mag_check == True and dec_vtx_check == True):
+                    if (tdd_check == True and d_mag_check == True and mom_mag_check == True and dec_vtx_check == True):
                         tracks += 1
 
                         # Update tracking lists
@@ -418,7 +418,13 @@ for m in range(len(file_list)):
 
     events += event_count
     seen_event_count_total += seen_event_count
-
+    acceptance = seen_event_count/event_count
+    print("acceptance is: ")
+    print(acceptance)
+    print("event count passed is: ")
+    print(events)
+    print("total number of events is: ")
+    print(seen_event_count)
     efficiencies = numpy.empty([len(event_passes), len(event_passes[0])])
     errors = numpy.empty([len(event_passes), len(event_passes[0])])
     for i in range(len(event_passes)):
@@ -432,7 +438,7 @@ for m in range(len(file_list)):
             data_list.append({"cmass": mChild, "lifetime": lifetime, "clifetime": clifetime, "pt": pt_pass_checks[i], "d0": d0_pass_checks[j],
                     "efficiency": efficiencies[i][j], "error": errors[i][j]})
 
-    cf_dict = {"cmass": mChild, "lifetime": lifetime, "events": event_count, "seen": seen_event_count}
+            cf_dict = {"cmass": mChild, "lifetime": lifetime, "clifeitme": clifetime, "events": event_count, "seen": seen_event_count}
     for i in range(len(pt_cuts)):
         cf_dict[pt_cuts[i]] = pt_ok_list[i]
     for i in range(len(d0_cuts)):
@@ -444,7 +450,7 @@ for m in range(len(file_list)):
 
     histogram_list.append({"cmass": mChild, "lifetime": lifetime, "etas": eta_list, "d0s": d0_list, "pt_list": pt_list,
             "energy": energy_list, "decay distance": dec_dist_list,
-            "trans decay distance": trans_dec_dist_list})
+            "trans decay distance": trans_dec_dist_list, "acceptance": acceptance})
 
     print("Done with ", model, " file ", n, " of ", len(file_list))
 
