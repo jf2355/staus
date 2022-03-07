@@ -37,9 +37,12 @@ track_eff = 1
 
 #change to true if you only want to run one graph instead of all
 doTest = False
+do5trackhiggs = True
 pre = ""
 if doTest:
     pre = "test_"
+if do5trackhiggs:
+    pre = "5track_"
 
 #change to true if use_slope_eff was used in stau_eff.py
 use_slope_eff = True
@@ -121,7 +124,7 @@ for i in data["data"]:
     twodeffs = np.swapaxes(cefficiencies,0,2)
 for i in data["cutflow"]:
     L = lt_list.index(i["lifetime"])
-    C = clt_list.index(i["clifetime"])
+    C = clt_list.index(i["clifeitme"])
     M = mass_list.index(i["cmass"])
     seen_event_list[M][C] = i["seen"]
     event_list[M][C] = i["events"]
@@ -397,7 +400,7 @@ if do_contour and do_acc and model==staus:
     #props = dict(boxstyle='round', facecolor="white", alpha = 0.5)
     #plt.text (420, -2.5, label, bbox= props)
     ax.set_yticklabels(['0.001','','0.01','','0.1','','1'])
-    fig.savefig('plots/%s/%dtrack_%.1feff_%smvsltACC%s_'%(pre,track_low_cut,track_eff,model,append) + '.pdf')
+    fig.savefig('plots/%s%dtrack_%.1feff_%smvsltACC%s_'%(pre,track_low_cut,track_eff,model,append) + '.pdf')
 
 if do_contour and model==staus:
 
@@ -463,9 +466,9 @@ if do_contour and model==staus:
                 "p$_{\mathrm{t}}$: " + \
                 "{:} GeV".format(pt_list[j])
             props = dict(boxstyle='round', facecolor="white", alpha = 0.5)
-            plt.text (420, -2.5, label, bbox= props)
+            plt.text (410, -.99, label, bbox= props)
             ax.set_yticklabels(['0.001','','0.01','','0.1','','1'])
-            fig.savefig('plots/%s/%dtrack_%.1feff_%smvslt%s_'%(pre,track_low_cut,track_eff,model,append) + str(d0_list[i])+ '_' + str(pt_list[j])+'.pdf')
+            fig.savefig('plots/%s%dtrack_%.1feff_%smvslt%s_'%(pre,track_low_cut,track_eff,model,append) + str(d0_list[i])+ '_' + str(pt_list[j])+'.pdf')
 
 if do_contour and model==higgs:
 
@@ -519,7 +522,7 @@ if do_contour and model==higgs:
     #props = dict(boxstyle='round', facecolor="white", alpha = 0.5)
     #plt.text (40, -.5, label, bbox= props)
     ax.set_yticklabels(['0.001','','0.01','','0.1','','1'])
-    fig.savefig('plots/%s/%dtrack_%.1feff_%smvsltACC%s_'%(pre,track_low_cut,track_eff,model,append) + '.pdf')
+    fig.savefig('plots/%s%dtrack_%.1feff_%smvsltACC%s_'%(pre,track_low_cut,track_eff,model,append) + '.pdf')
 
 if do_contour and model==higgs:
 
@@ -577,7 +580,7 @@ if do_contour and model==higgs:
             props = dict(boxstyle='round', facecolor="white", alpha = 0.5)
             plt.text (40, -.5, label, bbox= props)
             ax.set_yticklabels(['0.001','','0.01','','0.1','','1'])
-            fig.savefig('plots/%s/%dtrack_%.1feff_%smvslt%s_'%(pre,track_low_cut,track_eff,model,append) + str(d0_list[i])+ '_' + str(pt_list[j])+'.pdf')
+            fig.savefig('plots/%s%dtrack_%.1feff_%smvslt%s_'%(pre,track_low_cut,track_eff,model,append) + str(d0_list[i])+ '_' + str(pt_list[j])+'.pdf')
             print("saved it!")
 if do_hist:
 # Energy Histogram

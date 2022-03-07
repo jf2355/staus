@@ -27,7 +27,10 @@ if model == higgs:
     max_track_eff = 1
     seed(1)
     doTest = False
+    #change below line if you want binary slope (false) or realistic slope (true)
     use_slope_eff = True
+    #change below line if you want 5 track higgs vs standard 2 track, also change tracks >= line
+    #pre_name = '5track'
     #=====================================================================================================
 elif model == staus:
     file_list = glob.glob("/eos/user/k/kdipetri/Snowmass_HepMC/run_staus/*/events.hepmc")
@@ -133,6 +136,8 @@ def findBSMParticles(truthparticles, PDGID=None, decays=False) :
         if not particle.end_vertex :
             BSM_particles.append(particle)
 
+    #if len(BSM_particles) == 5:
+        #print(len(BSM_particles))
 
     if len(BSM_particles) != 2:
         print(len(BSM_particles))
@@ -171,7 +176,7 @@ def dfs_paths(stack, particle, stable_particles = []):
 
 def get_lifetime(lifetime_string):
     lifetime = lifetime_string.replace("p",".").strip("ns")
-    print(lifetime)
+    #print(lifetime)
     return float(lifetime)
 
 def getlifetime_fname(fname):
@@ -181,7 +186,7 @@ def getlifetime_fname(fname):
     if 'stable' in tokens:
         return 100000000
     lt = get_lifetime(tokens[3])
-    print(lt)
+    #print(lt)
     return lt
 
 
@@ -232,16 +237,16 @@ def passes_d0_cut(d0, d0cut, use_slope_eff):
 
 
 #File Level Start ===================================================================================================
-print(file_list)
+#print(file_list)
 file_list.sort(key=lambda fname: getlifetime_fname(fname))
 
-print(file_list)
+#print(file_list)
 
 for m in range(len(file_list)):
-    print(len(file_list))
+    #print(len(file_list))
     if 'stable' in file_list[m]:
-        print("skipping stable lifetimes")
-        print(file_list[m])
+        #print("skipping stable lifetimes")
+        #print(file_list[m])
         continue
     infile = file_list[m]
     n += 1
@@ -288,7 +293,7 @@ for m in range(len(file_list)):
             evt = f.read()
             if not evt:
                 break
-            if doTest and len(file_list)<3 and evt.event_number > 100:
+            if doTest and len(file_list) < 3 and evt.event_number > 100:
                 break
 
             if evt.event_number % 1000 == 0:
@@ -358,7 +363,7 @@ for m in range(len(file_list)):
                         tdd_check = False
                     if d_mag < 1:
                         d_mag_check = False
-                    if mom_mag < 0.5:
+                    if pt < 0.5:
                         mom_mag_check = False
                     dec_vtx_check = True
                     if part.end_vertex:
@@ -366,7 +371,7 @@ for m in range(len(file_list)):
                         decfourvec = decvtx.position
                         decpoint = numpy.array([decfourvec.x, decfourvec.y, decfourvec.z])
                         prod_dec_dist = numpy.array([decpoint[0] - point[0], decpoint[1] - point[1], decpoint[2] - point[2]])
-                        trans_prod_dec_dist = numpy.squt(numpy.square(prod_dec_dist[0]) + nupy.square(prod_dec_dist[1]))
+                        trans_prod_dec_dist = numpy.sqrt(numpy.square(prod_dec_dist[0]) + numpy.square(prod_dec_dist[1]))
                         if trans_prod_dec_dist < 200:
                             dec_vtx_check = False
 
@@ -399,7 +404,7 @@ for m in range(len(file_list)):
 
 
     #Particle Level End ===========================================================================================
-
+            #change below line to 4 instead of 1 if you want 5 track higgs instead of 2 track
             if tracks > 1:
                 seen_event_count += 1
             for i in range(len(event_pt_ok_list)):
@@ -454,13 +459,14 @@ for m in range(len(file_list)):
 
     print("Done with ", model, " file ", n, " of ", len(file_list))
 
+
     if doTest: break
 
 #File Level End =====================================================================================================
 
 data = {"data": data_list, "cutflow": cutflow_list, "hist": histogram_list, "lifetimes": lifetime_list,
         "clifetimes": clifetime_list, "pts": pt_pass_checks, "d0s": d0_pass_checks, "str_pts": pt_cuts, "str_d0s": d0_cuts, "str_both": full_cuts}
-save_name = '%s_%dtrack_%.1feffs.json'%(model,track_low_cut,max_track_eff)
+save_name = '%s_%dtrack_%.1feffs_NOslope.json'%(model,track_low_cut,max_track_eff)
 if use_slope_eff and doTest:
     save_name = 'test_%s_%dtrack_%.1feffs_slope.json'%(model,track_low_cut,max_track_eff)
 elif doTest:
