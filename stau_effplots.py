@@ -25,19 +25,20 @@ event_count = 10000
 check = 1
 
 #change to true if you want to run a certain section of the plotting code
-do_avg = True
-do_hist = True
-do_cutflow = True
-do_eff = True
-do_acc = True
-do_contour = True
+do_avg = False
+do_hist = False
+do_cutflow = False
+do_eff = False
+do_acc = False
+do_acceff = True
+do_contour = False
 
 #track efficiency defined in stau_eff.py
 track_eff = 1
 
 #change to true if you only want to run one graph instead of all
 doTest = False
-do5trackhiggs = True
+do5trackhiggs = False
 pre = ""
 if doTest:
     pre = "test_"
@@ -211,26 +212,21 @@ for i in data["cutflow"]:
     cf_values_d0.append(temp_cf_values_d0)
     cf_values_both.append(temp_cf_values_both)
 
-#print(cf_values_pt[0])
-
 f.close()
-
 
 def manual_cmap(cmap, value=1.):
     colors = cmap(np.arange(cmap.N))
     hls = np.array([colorsys.rgb_to_hls(*c) for c in colors[:,:3]])
     hls[:,1] *= value
     rgb = np.clip(np.array([colorsys.hls_to_rgb(*c) for c in hls]), 0,1)
-    print("color did it one")
     return mcolors.LinearSegmentedColormap.from_list("", rgb)
-    print("color did it")
 
 #EFFICIENCY PLOTS
 #-----------------
 if do_eff:
     if use_slope_eff:
         print("used slope eff")
-# X axis lifetime transvese momentum efficiency plots
+# X axis lifetime transverse momentum efficiency plots
     print("pt eff plots-x axis lifetime")
     for i in range(len(mass_list)):
         for j in range(len(pt_list)):
@@ -263,8 +259,8 @@ if do_eff:
                 axs.errorbar(cmasses[i][j][k], efficiencies[i][j][k], yerr = errors[i][j][k], label = "d0 < " + str(d0_list[k]) + " mm", marker = "o", alpha = 0.5)
             axs.legend(fontsize = "small", frameon = False)
             fig.savefig('plots/%s%dtrack_%.1feff_%s_eff%s_'%(pre,track_low_cut,track_eff,model,append) + str(lt_list[i]) + '_pt' + str(pt_list[j]) + '.pdf' )
-            #if doTest: break
-        #if doTest: break
+            if doTest: break
+        if doTest: break
 
 # Fixed d0 efficiency plots
     print("d0 eff plots-x axis lifetime")
@@ -279,8 +275,8 @@ if do_eff:
                 axs.errorbar(clifetimes[i][k][j], cefficiencies[i][k][j], yerr = cerrors[i][k][j], label = "pt > " + str(pt_list[k]) + " GeV", marker = "o", alpha = 0.5)
             axs.legend(fontsize = "small", frameon = False)
             fig.savefig('plots/%s%dtrack_%.1feff_%s_eff%s_'%(pre,track_low_cut,track_eff,model,append) + str(mass_list[i]) + '_d0' + str(d0_list[j]) + '.pdf' )
-            #if doTest: break
-        #if doTest: break
+            if doTest: break
+        if doTest: break
 
 # Fixed d0 efficiency plots
     print("d0 eff plots-x axis mass")
@@ -300,7 +296,6 @@ if do_eff:
 # AVERAGES PLOTS
 #---------------------
 if do_avg:
-
 # Average energy plots
     print("avg energy plots")
     for i in range(len(lt_list)):
@@ -348,7 +343,7 @@ if do_avg:
 
 # GENERAL HISTOGRAMS
 #--------------------
-if do_contour and do_acc and model==staus:
+if do_acc:
 
     print("2D mass vs lifetime no hist")
 
@@ -371,11 +366,10 @@ if do_contour and do_acc and model==staus:
     xArray = np.array(xArray)
     yArray = np.array(yArray)
     zArray = np.array(zArray)
-    #print("masslist shape", xArray.shape)
-    #print("lifetimelist shape", yArray.shape)
-    #print("both shape", zArray.shape)
-    #print(xArray,yArray,zArray)
-    xlinspace = np.linspace(100,600,500)
+    if model == higgs:
+        xlinspace = np.linspace(5,55,500)
+    elif model == staus:
+        xlinspace = np.linspace(100,600,500)
     ylinspace = np.linspace(-3,0,500)
     xymeshgrid = np.meshgrid(xlinspace,ylinspace)
     ZI = scipy.interpolate.griddata((xArray,yArray), zArray, (xymeshgrid[0],xymeshgrid[1]), method="cubic")
@@ -384,30 +378,77 @@ if do_contour and do_acc and model==staus:
     plt.pcolor(xymeshgrid[0], xymeshgrid[1], ZI, vmax=1, vmin=0, rasterized=True,cmap=myjet,alpha=1)
     cbar = plt.colorbar()
     cbar.set_label("Efficiency", rotation=270, labelpad=10)
-
-
-    CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0], colors="k", rasterized=True)
+    if model == higgs:
+        CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.92,0.94,0.96,0.98,1.0], colors="k", rasterized=True)
+    if model == staus:
+        CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0], colors="k", rasterized=True)
     plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
     plt.xlabel(r"Mass (GeV)")
     plt.ylabel(r"Log of Lifetime (ns)")
     plt.title("")
     plt.grid(alpha=0.2, which="major")
     plt.grid(alpha=0.1, which="minor")
-    #label = "d$_{\mathrm{0}}$: " + \
-        #"{:} mm\n".format(d0_list[i]) + \
-        #"p$_{\mathrm{t}}$: " + \
-        #"{:} GeV".format(pt_list[j])
-    #props = dict(boxstyle='round', facecolor="white", alpha = 0.5)
-    #plt.text (420, -2.5, label, bbox= props)
     ax.set_yticklabels(['0.001','','0.01','','0.1','','1'])
     fig.savefig('plots/%s%dtrack_%.1feff_%smvsltACC%s_'%(pre,track_low_cut,track_eff,model,append) + '.pdf')
 
-if do_contour and model==staus:
+if do_acceff:
+    for i in range(len(d0_list)):
+        for j in range(len(pt_list)):
+            myjet = manual_cmap(plt.cm.get_cmap("rainbow"), 1.2)
+            xArray = []
+            yArray = []
+            zArray = []
 
+            twodeffsel = twodeffs[i][j]
+            acceff = np.multiply(acc,twodeffsel)
+            print(acceff)
+
+            for k in range(len(mass_list)):
+                for l in range(len(clt_list)):
+                    if np.isnan(acceff[k][l]) : continue
+                    xArray.append(mass_list[k])
+                    yArray.append(clt_list[l])
+                    zArray.append(acceff[k][l])
+    ytmp = []
+    for y in yArray:
+        ytmp.append(math.log(y))
+    yArray = ytmp
+    xArray = np.array(xArray)
+    yArray = np.array(yArray)
+    zArray = np.array(zArray)
+    if model == higgs:
+        xlinspace = np.linspace(5,55,500)
+    if model == staus:
+        xlinspace = np.linspace(100,600,500)
+    ylinspace = np.linspace(-3,0,500)
+    xymeshgrid = np.meshgrid(xlinspace,ylinspace)
+    ZI = scipy.interpolate.griddata((xArray,yArray), zArray, (xymeshgrid[0],xymeshgrid[1]), method="cubic")
+
+    fig, ax = plt.subplots(figsize=(6, 4) )
+    if model == higgs:
+        plt.pcolor(xymeshgrid[0], xymeshgrid[1], ZI, vmax=0.25, vmin=0, rasterized=True,cmap=myjet,alpha=1)
+    if model == staus:
+        plt.pcolor(xymeshgrid[0], xymeshgrid[1], ZI, vmax=0.6, vmin=0, rasterized=True,cmap=myjet,alpha=1)
+    cbar = plt.colorbar()
+    cbar.set_label("Efficiency", rotation=270, labelpad=10)
+
+    if model == higgs:
+        CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2,0.22,0.24], colors="k", rasterized=True)
+    if model == staus:
+        CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0], colors="k", rasterized=True)
+    plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
+    plt.xlabel(r"Mass (GeV)")
+    plt.ylabel(r"Log of Lifetime (ns)")
+    plt.title("")
+    plt.grid(alpha=0.2, which="major")
+    plt.grid(alpha=0.1, which="minor")
+    ax.set_yticklabels(['0.001','','0.01','','0.1','','1'])
+    fig.savefig('plots/%s%dtrack_%.1feff_%smvsltACCEFF%s_'%(pre,track_low_cut,track_eff,model,append) + '.pdf')
+
+if do_contour:
     print("2D mass vs lifetime no hist")
     for i in range(len(d0_list)):
         for j in range(len(pt_list)):
-
             myjet = manual_cmap(plt.cm.get_cmap("rainbow"), 1.2)
             xArray = []
             yArray = []
@@ -422,16 +463,6 @@ if do_contour and model==staus:
                     yArray.append(clt_list[l])
                     zArray.append(twodeffsel[k][l])
 
-                    '''print("in the loop")
-                    twodeffsel = twodeffs[D][P]
-                    print("length of twodefsel is ", len(twodeffsel))
-                    xArray = mass_list
-                    print("length of mass_list is ", len(xArray))
-                    yArray = clt_list
-                    print("length of clt_list is ", len(yArray))
-                    zArray = [[L for L in twodeffsel[M]]]
-                    print("length of twodefsel[m][l] is ", len(zArray))
-                    '''
             ytmp = []
             for y in yArray:
                 ytmp.append(math.log(y))
@@ -439,11 +470,10 @@ if do_contour and model==staus:
             xArray = np.array(xArray)
             yArray = np.array(yArray)
             zArray = np.array(zArray)
-            #print("masslist shape", xArray.shape)
-            #print("lifetimelist shape", yArray.shape)
-            #print("both shape", zArray.shape)
-            #print(xArray,yArray,zArray)
-            xlinspace = np.linspace(100,600,500)
+            if model == higgs:
+                xlinspace = np.linspace(5,55,500)
+            if model == staus:
+                xlinspace = np.linspace(100,600,500)
             ylinspace = np.linspace(-3,0,500)
             xymeshgrid = np.meshgrid(xlinspace,ylinspace)
             ZI = scipy.interpolate.griddata((xArray,yArray), zArray, (xymeshgrid[0],xymeshgrid[1]), method="cubic")
@@ -453,8 +483,10 @@ if do_contour and model==staus:
             cbar = plt.colorbar()
             cbar.set_label("Efficiency", rotation=270, labelpad=10)
 
-
-            CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0], colors="k", rasterized=True)
+            if model == higgs:
+                CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.92,0.94,0.96,0.98,1.0], colors="k", rasterized=True)
+            if model == staus:
+                CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0], colors="k", rasterized=True)
             plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
             plt.xlabel(r"Mass (GeV)")
             plt.ylabel(r"Log of Lifetime (ns)")
@@ -470,118 +502,6 @@ if do_contour and model==staus:
             ax.set_yticklabels(['0.001','','0.01','','0.1','','1'])
             fig.savefig('plots/%s%dtrack_%.1feff_%smvslt%s_'%(pre,track_low_cut,track_eff,model,append) + str(d0_list[i])+ '_' + str(pt_list[j])+'.pdf')
 
-if do_contour and model==higgs:
-
-    print("2D mass vs lifetime no hist")
-
-    myjet = manual_cmap(plt.cm.get_cmap("rainbow"), 1.2)
-    xArray = []
-    yArray = []
-    zArray = []
-
-    for k in range(len(mass_list)):
-        for l in range(len(clt_list)):
-            if np.isnan(acc[k][l]) : continue
-            xArray.append(mass_list[k])
-            yArray.append(clt_list[l])
-            zArray.append(acc[k][l])
-
-    ytmp = []
-    for y in yArray:
-        ytmp.append(math.log(y))
-    yArray = ytmp
-    xArray = np.array(xArray)
-    yArray = np.array(yArray)
-    zArray = np.array(zArray)
-    #print("masslist shape", xArray.shape)
-    #print("lifetimelist shape", yArray.shape)
-    #print("both shape", zArray.shape)
-    #print(xArray,yArray,zArray)
-    xlinspace = np.linspace(5,55,500)
-    ylinspace = np.linspace(-3,0,500)
-    xymeshgrid = np.meshgrid(xlinspace,ylinspace)
-    ZI = scipy.interpolate.griddata((xArray,yArray), zArray, (xymeshgrid[0],xymeshgrid[1]), method="cubic")
-
-    fig, ax = plt.subplots(figsize=(6, 4) )
-    plt.pcolor(xymeshgrid[0], xymeshgrid[1], ZI, vmax=1, vmin=0, rasterized=True,cmap=myjet,alpha=1)
-    cbar = plt.colorbar()
-    cbar.set_label("Efficiency", rotation=270, labelpad=10)
-
-
-    CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.92,0.94,0.96,0.98,1.0], colors="k", rasterized=True)
-    plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
-    plt.xlabel(r"Mass (GeV)")
-    plt.ylabel(r"Log of Lifetime (ns)")
-    plt.title("")
-    plt.grid(alpha=0.2, which="major")
-    plt.grid(alpha=0.1, which="minor")
-    #label = "d$_{\mathrm{0}}$: " + \
-        #"{:} mm\n".format(d0_list[i]) + \
-        #"p$_{\mathrm{t}}$: " + \
-        #"{:} GeV".format(pt_list[j])
-    #props = dict(boxstyle='round', facecolor="white", alpha = 0.5)
-    #plt.text (40, -.5, label, bbox= props)
-    ax.set_yticklabels(['0.001','','0.01','','0.1','','1'])
-    fig.savefig('plots/%s%dtrack_%.1feff_%smvsltACC%s_'%(pre,track_low_cut,track_eff,model,append) + '.pdf')
-
-if do_contour and model==higgs:
-
-    print("2D mass vs lifetime no hist")
-    for i in range(len(d0_list)):
-        for j in range(len(pt_list)):
-
-            myjet = manual_cmap(plt.cm.get_cmap("rainbow"), 1.2)
-            xArray = []
-            yArray = []
-            zArray = []
-
-            twodeffsel = twodeffs[i][j]
-
-            for k in range(len(mass_list)):
-                for l in range(len(clt_list)):
-                    if np.isnan(twodeffsel[k][l]) : continue
-                    xArray.append(mass_list[k])
-                    yArray.append(clt_list[l])
-                    zArray.append(twodeffsel[k][l])
-
-            ytmp = []
-            for y in yArray:
-                ytmp.append(math.log(y))
-            yArray = ytmp
-            xArray = np.array(xArray)
-            yArray = np.array(yArray)
-            zArray = np.array(zArray)
-            #print("masslist shape", xArray.shape)
-            #print("lifetimelist shape", yArray.shape)
-            #print("both shape", zArray.shape)
-            #print(xArray,yArray,zArray)
-            xlinspace = np.linspace(5,55,500)
-            ylinspace = np.linspace(-3,0,500)
-            xymeshgrid = np.meshgrid(xlinspace,ylinspace)
-            ZI = scipy.interpolate.griddata((xArray,yArray), zArray, (xymeshgrid[0],xymeshgrid[1]), method="cubic")
-
-            fig, ax = plt.subplots(figsize=(6, 4) )
-            plt.pcolor(xymeshgrid[0], xymeshgrid[1], ZI, vmax=1, vmin=0, rasterized=True,cmap=myjet,alpha=1)
-            cbar = plt.colorbar()
-            cbar.set_label("Efficiency", rotation=270, labelpad=10)
-
-
-            CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.92,0.94,0.96,0.98,1.0], colors="k", rasterized=True)
-            plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
-            plt.xlabel(r"Mass (GeV)")
-            plt.ylabel(r"Log of Lifetime (ns)")
-            plt.title("")
-            plt.grid(alpha=0.2, which="major")
-            plt.grid(alpha=0.1, which="minor")
-            label = "d$_{\mathrm{0}}$: " + \
-                "{:} mm\n".format(d0_list[i]) + \
-                "p$_{\mathrm{t}}$: " + \
-                "{:} GeV".format(pt_list[j])
-            props = dict(boxstyle='round', facecolor="white", alpha = 0.5)
-            plt.text (40, -.5, label, bbox= props)
-            ax.set_yticklabels(['0.001','','0.01','','0.1','','1'])
-            fig.savefig('plots/%s%dtrack_%.1feff_%smvslt%s_'%(pre,track_low_cut,track_eff,model,append) + str(d0_list[i])+ '_' + str(pt_list[j])+'.pdf')
-            print("saved it!")
 if do_hist:
 # Energy Histogram
     print("energy hist")
