@@ -401,6 +401,7 @@ if do_acceff:
 
             twodeffsel = twodeffs[i][j]
             acceff = np.multiply(acc,twodeffsel)
+            print('acceff is: ')
             print(acceff)
 
             for k in range(len(mass_list)):
@@ -409,41 +410,41 @@ if do_acceff:
                     xArray.append(mass_list[k])
                     yArray.append(clt_list[l])
                     zArray.append(acceff[k][l])
-    ytmp = []
-    for y in yArray:
-        ytmp.append(math.log(y))
-    yArray = ytmp
-    xArray = np.array(xArray)
-    yArray = np.array(yArray)
-    zArray = np.array(zArray)
-    if model == higgs:
-        xlinspace = np.linspace(5,55,500)
-    if model == staus:
-        xlinspace = np.linspace(100,600,500)
-    ylinspace = np.linspace(-3,0,500)
-    xymeshgrid = np.meshgrid(xlinspace,ylinspace)
-    ZI = scipy.interpolate.griddata((xArray,yArray), zArray, (xymeshgrid[0],xymeshgrid[1]), method="cubic")
+            ytmp = []
+            for y in yArray:
+            ytmp.append(math.log(y))
+            yArray = ytmp
+            xArray = np.array(xArray)
+            yArray = np.array(yArray)
+            zArray = np.array(zArray)
+            if model == higgs:
+                xlinspace = np.linspace(5,55,500)
+            if model == staus:
+                xlinspace = np.linspace(100,600,500)
+            ylinspace = np.linspace(-3,0,500)
+            xymeshgrid = np.meshgrid(xlinspace,ylinspace)
+            ZI = scipy.interpolate.griddata((xArray,yArray), zArray, (xymeshgrid[0],xymeshgrid[1]), method="cubic")
 
-    fig, ax = plt.subplots(figsize=(6, 4) )
-    if model == higgs:
-        plt.pcolor(xymeshgrid[0], xymeshgrid[1], ZI, vmax=0.25, vmin=0, rasterized=True,cmap=myjet,alpha=1)
-    if model == staus:
-        plt.pcolor(xymeshgrid[0], xymeshgrid[1], ZI, vmax=0.6, vmin=0, rasterized=True,cmap=myjet,alpha=1)
-    cbar = plt.colorbar()
-    cbar.set_label("Efficiency", rotation=270, labelpad=10)
+            fig, ax = plt.subplots(figsize=(6, 4) )
+            if model == higgs:
+                plt.pcolor(xymeshgrid[0], xymeshgrid[1], ZI, vmax=0.25, vmin=0, rasterized=True,cmap=myjet,alpha=1)
+            if model == staus:
+               plt.pcolor(xymeshgrid[0], xymeshgrid[1], ZI, vmax=0.6, vmin=0, rasterized=True,cmap=myjet,alpha=1)
+            cbar = plt.colorbar()
+            cbar.set_label("Efficiency", rotation=270, labelpad=10)
 
-    if model == higgs:
-        CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2,0.22,0.24], colors="k", rasterized=True)
-    if model == staus:
-        CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0], colors="k", rasterized=True)
-    plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
-    plt.xlabel(r"Mass (GeV)")
-    plt.ylabel(r"Log of Lifetime (ns)")
-    plt.title("")
-    plt.grid(alpha=0.2, which="major")
-    plt.grid(alpha=0.1, which="minor")
-    ax.set_yticklabels(['0.001','','0.01','','0.1','','1'])
-    fig.savefig('plots/%s%dtrack_%.1feff_%smvsltACCEFF%s_'%(pre,track_low_cut,track_eff,model,append) + '.pdf')
+           if model == higgs:
+                CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2,0.22,0.24], colors="k", rasterized=True)
+            if model == staus:
+                 CS = plt.contour(xymeshgrid[0], xymeshgrid[1], ZI, levels=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0], colors="k", rasterized=True)
+           plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
+           plt.xlabel(r"Mass (GeV)")
+           plt.ylabel(r"Log of Lifetime (ns)")
+           plt.title("")
+           plt.grid(alpha=0.2, which="major")
+           plt.grid(alpha=0.1, which="minor")
+           ax.set_yticklabels(['0.001','','0.01','','0.1','','1'])
+           fig.savefig('plots/%s%dtrack_%.1feff_%smvsltACCEFF%s_'%(pre,track_low_cut,track_eff,model,append) + '.pdf')
 
 if do_contour:
     print("2D mass vs lifetime no hist")
